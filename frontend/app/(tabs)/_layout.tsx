@@ -12,7 +12,6 @@ import { useI18n } from "@/src/context/LanguageContext";
 const TABS: Record<string, { key: string; icon: any }> = {
   map: { key: "tab_map", icon: "map" },
   index: { key: "tab_discover", icon: "compass" },
-  trips: { key: "tab_trips", icon: "airplane" },
   favorites: { key: "tab_favorites", icon: "heart" },
   account: { key: "tab_account", icon: "person" },
 };
@@ -56,9 +55,9 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="map" />
       <Tabs.Screen name="index" />
-      <Tabs.Screen name="trips" />
       <Tabs.Screen name="favorites" />
       <Tabs.Screen name="account" />
+      <Tabs.Screen name="trips" options={{ href: null }} />
     </Tabs>
   );
 }

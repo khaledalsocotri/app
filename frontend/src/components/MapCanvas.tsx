@@ -6,12 +6,25 @@ import { COLORS, SHADOW } from "@/src/theme/theme";
 
 const SOCOTRA_REGION = { latitude: 12.5, longitude: 53.95, latitudeDelta: 0.85, longitudeDelta: 0.85 };
 
+// Distinctive teal tourism map theme.
+const MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#e9f2f2" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#0e4a52" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#a9dfe4" }] },
+  { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#dcebdc" }] },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "administrative", elementType: "geometry", stylers: [{ visibility: "off" }] },
+];
+
 export function MapCanvas({ destinations, colorMap, selected, granted, onSelect }: any) {
   return (
     <MapView
       style={StyleSheet.absoluteFill}
       provider={PROVIDER_GOOGLE}
       initialRegion={SOCOTRA_REGION}
+      customMapStyle={MAP_STYLE}
       showsUserLocation={granted}
       showsMyLocationButton={false}
       onPress={() => onSelect(null)}

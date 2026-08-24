@@ -433,6 +433,101 @@ class TestAdminAdvanced:
         assert r3.status_code == 403
 
 
+# --------------------------- Services (list/detail + admin CRUD) ---------------------------
+class TestServices:
+    def test_services_list_seeded(self, api, base_url):
+        r = api.get(f"{base_url}/services")
+        assert r.status_code == 200
+        arr = r.json()
+        assert isinstance(arr, list) and len(arr) >= 4, f"expected >=4 seeded services, got {len(arr)}"
+        s = arr[0]
+        for k in ["id", "name_ar", "name_en", "category"]:
+            assert k in s
+
+    def test_service_detail(self, api, base_url):
+        arr = api.get(f"{base_url}/services").json()
+        sid = arr[0]["id"]
+        r = api.get(f"{base_url}/services/{sid}")
+        assert r.status_code == 200 and r.json()["id"] == sid
+
+    def test_service_detail_404(self, api, base_url):
+        r = api.get(f"{base_url}/services/no-such-service")
+        assert r.status_code == 404
+
+    def test_service_category_filter(self, api, base_url):
+        arr = api.get(f"{base_url}/services").json()
+        cat = arr[0]["category"]
+        r = api.get(f"{base_url}/services", params={"category": cat})
+        assert r.status_code == 200
+        for s in r.json():
+            assert s["category"] == cat
+
+    def test_admin_services_crud_visible_in_public(self, api, base_url, admin_headers):
+        payload = {
+            "name_ar": "TEST خدمة", "name_en": "TEST Service", "category": "shop",
+            "cover_image": "https://example.com/s.jpg", "location_ar": "TEST",
+            "phone": "+9670000000", "rating": 4.0,
+        }
+        r = api.post(f"{base_url}/admin/services", json=payload, headers=admin_headers)
+        assert r.status_code == 200, r.text
+        new_id = r.json()["id"]
+        # Appears in public list
+        listed = api.get(f"{base_url}/services").json()
+        assert any(s["id"] == new_id for s in listed)
+        # Update
+        ru = api.put(f"{base_url}/admin/services/{new_id}", json={"name_en": "TEST Service Updated"}, headers=admin_headers)
+        assert ru.status_code == 200 and ru.json()["name_en"] == "TEST Service Updated"
+        # Delete
+        rd = api.delete(f"{base_url}/admin/services/{new_id}", headers=admin_headers)
+        assert rd.status_code == 200
+        after = api.get(f"{base_url}/services").json()
+        assert not any(s["id"] == new_id for s in after)
+
+    def test_admin_services_non_admin_403(self, api, base_url, auth_headers):
+        r = api.post(f"{base_url}/admin/services", json={"name_ar": "x", "category": "shop"}, headers=auth_headers)
+        assert r.status_code == 403
+        r2 = api.put(f"{base_url}/admin/services/xxx", json={"name_en": "y"}, headers=auth_headers)
+        assert r2.status_code == 403
+        r3 = api.delete(f"{base_url}/admin/services/xxx", headers=auth_headers)
+        assert r3.status_code == 403
+
+
+# --------------------------- Events (admin CRUD) ---------------------------
+class TestEventsAdmin:
+    def test_admin_events_crud_visible_in_public(self, api, base_url, admin_headers):
+        payload = {
+            "title_ar": "TEST فعالية", "title_en": "TEST Event",
+            "date": "2026-05-01", "location_ar": "TEST", "location_en": "TEST",
+            "cover_image": "https://example.com/e.jpg",
+        }
+        r = api.post(f"{base_url}/admin/events", json=payload, headers=admin_headers)
+        assert r.status_code == 200, r.text
+        new_id = r.json()["id"]
+        listed = api.get(f"{base_url}/events").json()
+        assert any(e["id"] == new_id for e in listed)
+        ru = api.put(f"{base_url}/admin/events/{new_id}", json={"title_en": "TEST Event Updated"}, headers=admin_headers)
+        assert ru.status_code == 200 and ru.json()["title_en"] == "TEST Event Updated"
+        rd = api.delete(f"{base_url}/admin/events/{new_id}", headers=admin_headers)
+        assert rd.status_code == 200
+        after = api.get(f"{base_url}/events").json()
+        assert not any(e["id"] == new_id for e in after)
+
+    def test_admin_events_non_admin_403(self, api, base_url, auth_headers):
+        r = api.post(f"{base_url}/admin/events", json={"title_ar": "x"}, headers=auth_headers)
+        assert r.status_code == 403
+        r2 = api.put(f"{base_url}/admin/events/xxx", json={"title_en": "y"}, headers=auth_headers)
+        assert r2.status_code == 403
+        r3 = api.delete(f"{base_url}/admin/events/xxx", headers=auth_headers)
+        assert r3.status_code == 403
+
+
+# --------------------------- Admin unknown entity ---------------------------
+class TestAdminUnknownEntity:
+    def test_unknown_entity_404(self, api, base_url, admin_headers):
+        r = api.post(f"{base_url}/admin/pizzas", json={"x": 1}, headers=admin_headers)
+        assert r.status_code == 404
+
+
 # --------------------------- Host Reply (Reviews) ---------------------------
 class TestHostReply:
     def test_reply_requires_admin(self, api, base_url, auth_headers):

@@ -32,17 +32,31 @@ const ENTITIES: Record<string, { label: string; fields: Field[] }> = {
       { k: "popular", t: "bool", label: "شائع" },
     ],
   },
-  trips: {
-    label: "الرحلات",
+  services: {
+    label: "الخدمات",
+    fields: [
+      { k: "name_ar", t: "text", label: "الاسم بالعربية" },
+      { k: "name_en", t: "text", label: "الاسم بالإنجليزية" },
+      { k: "category", t: "text", label: "الفئة: health / fuel / bank / guide / restaurant / shop" },
+      { k: "description_ar", t: "text", label: "الوصف", multiline: true },
+      { k: "cover_image", t: "image", label: "الصورة" },
+      { k: "location_ar", t: "text", label: "الموقع" },
+      { k: "phone", t: "text", label: "الهاتف" },
+      { k: "latitude", t: "number", label: "خط العرض" },
+      { k: "longitude", t: "number", label: "خط الطول" },
+      { k: "rating", t: "number", label: "التقييم (1-5)" },
+    ],
+  },
+  events: {
+    label: "الفعاليات",
     fields: [
       { k: "name_ar", t: "text", label: "الاسم بالعربية" },
       { k: "name_en", t: "text", label: "الاسم بالإنجليزية" },
       { k: "description_ar", t: "text", label: "الوصف", multiline: true },
       { k: "cover_image", t: "image", label: "الصورة" },
-      { k: "price", t: "number", label: "السعر" },
-      { k: "duration_days", t: "number", label: "عدد الأيام" },
-      { k: "available_seats", t: "number", label: "المقاعد المتاحة" },
-      { k: "rating", t: "number", label: "التقييم (1-5)" },
+      { k: "date_ar", t: "text", label: "التاريخ" },
+      { k: "location_ar", t: "text", label: "الموقع" },
+      { k: "price", t: "number", label: "السعر (0 = مجاني)" },
     ],
   },
   offers: {

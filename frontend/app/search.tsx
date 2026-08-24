@@ -88,9 +88,6 @@ export default function Search() {
           {results.products.length > 0 && (
             <Section title={t("fav_products")}><Rail>{results.products.map((i: any) => <View key={i.id} style={{ width: 160 }}><ProductCard item={i} width={160} /></View>)}</Rail></Section>
           )}
-          {results.trips.length > 0 && (
-            <Section title={t("fav_trips")}><View style={{ paddingHorizontal: SPACING.lg, gap: SPACING.lg }}>{results.trips.map((i: any) => <TripCard key={i.id} item={i} />)}</View></Section>
-          )}
         </ScrollView>
       )}
     </View>

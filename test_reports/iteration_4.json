@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 4 — Services/Events admin CRUD + Trips-removed-from-UI regression pass. Backend: 62/62 pytest pass (added 9 new tests: TestServices with 6 tests covering GET /services list (4 seeded), detail, 404, category filter, admin CRUD roundtrip with public list verification, and non-admin 403 for POST/PUT/DELETE; TestEventsAdmin with 2 tests covering admin events CRUD + non-admin 403; TestAdminUnknownEntity for /admin/pizzas -> 404). All prior 49 tests + 4 Host Reply tests still green. IMAGE UPLOAD unchanged and green (TestUploads). Frontend (390x844 mobile web, Arabic RTL, EXPO_PUBLIC_BACKEND_URL): (1) Bottom nav shows EXACTLY 4 tabs: tab-map, tab-index, tab-favorites, tab-account — NO tab-trips (hidden via href:null in _layout.tsx as intended). (2) Discover screen shows 4 quick tiles including 'الخدمات' with testID 'quick-services'; tapping navigates to /services which loads 4 real service cards (service-serv_*) each with call button (+967 phone links) and directions button. (3) Map tab renders branded 'اكتشف سقطرى' header with category legend chips + category-grouped destination cards (web fallback, native Google map is device-only — expected). (4) Favorites tab has NO 'رحلات' sub-tab. (5) Search screen for 'socotra' returns only 'المنتجات' section — no trips section. (6) Admin login (admin@socotra.app/Admin@123) -> Account shows 'مدير' badge + menu-admin -> /admin dashboard with 6 stat cards (8 users, 12 destinations, 3 trips [backend still tracks], 8 products, 7 experiences, 20 bookings) -> /admin/content shows 6 tabs: admin-tab-destinations, admin-tab-services (الخدمات), admin-tab-events (الفعاليات), admin-tab-offers, admin-tab-products, admin-tab-experiences and NO admin-tab-trips; admin-add-item button present. No red screens or crashes observed. Only console warnings: shadow* and props.pointerEvents deprecated (pre-existing, non-blocking).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "global", "issues": ["Pre-existing RN-Web console warnings: 'shadow*' style props deprecated (use boxShadow), 'props.pointerEvents' deprecated (use style.pointerEvents). Non-blocking."]}
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/test_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "None blocking. Optional cleanup (carried over from iter 3): migrate deprecated RN-Web style props (shadow*, style.pointerEvents) to silence console warnings."
+  ],
+  "critical_code_review_comments": [
+    "Services endpoints follow existing pattern: GET /services (with category+search filter), GET /services/{id} returns 404 when missing; MongoDB _id excluded via {'_id': 0} projection.",
+    "Admin CRUD is generic via /admin/{entity} with _ADMIN_COLLS whitelist containing destinations, trips, offers, products, experiences, services, events — no arbitrary collection writes possible; unknown entity returns 404.",
+    "Trips route is hidden via <Tabs.Screen name='trips' options={{ href: null }} /> — backend endpoints/models retained for V2 as per agent context (intentional).",
+    "Services list is seeded idempotently on startup (only if collection empty); test found 4 seeded services matching >=4 requirement.",
+    "Services screen /services correctly links directions via Platform.select (maps://, google.navigation, and Google Maps web fallback) — safe cross-platform."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_backend.py (added TestServices with 6 tests, TestEventsAdmin with 2 tests, TestAdminUnknownEntity with 1 test)"
+  ],
+  "success_rate": { "backend": "100% (62/62)", "frontend": "100% of critical flows verified (visitor+admin login, 4-tab bottom nav, services screen from Discover, branded map, favorites without trips, search without trips section, admin content mgmt with services+events tabs and no trips tab)" },
+  "seed_data_creation": "Reused existing seed (12 destinations, 4 services, 3 trips backend-only, 8 products, 7 experiences, events, offers). Test-created services/events prefixed with 'TEST' and cleaned up in the same test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend base = EXPO_PUBLIC_BACKEND_URL + /api. Users: visitor@socotra.app/Visit@123, admin@socotra.app/Admin@123. All 62 backend tests in /app/backend/tests/test_backend.py must remain green. Services + Events admin CRUD is namespaced via /api/admin/{entity} with entity in {destinations, trips, offers, products, experiences, services, events}. Trips tab is hidden via href:null but backend endpoints remain — do NOT flag as bug. Map on web shows category-grouped fallback layout (native Google map device-only). Services quick tile testID is 'quick-services'. Admin content tabs use 'admin-tab-{entity}' pattern. Web preview upload dialog is native file picker (validate uploads via backend /api/upload + /api/files as TestUploads does).",
+  "rca_of_issue": "N/A — no regressions or bugs surfaced in this pass."
+}

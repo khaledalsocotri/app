@@ -67,6 +67,10 @@ export default function MapScreen() {
 
       {/* Floating search + chips */}
       <View style={[styles.topWrap, { paddingTop: insets.top + SPACING.sm }]} pointerEvents="box-none">
+        <View style={styles.brandRow}>
+          <View style={styles.brandBadge}><Ionicons name="leaf" size={14} color="#fff" /></View>
+          <Text style={styles.brandTitle}>{t("discover_socotra")}</Text>
+        </View>
         <Pressable style={[styles.search, SHADOW.card]} onPress={() => router.push("/search")} testID="map-search">
           <Ionicons name="search" size={20} color={COLORS.onSurfaceSecondary} />
           <Text style={styles.searchTxt}>{t("search_in_map")}</Text>
@@ -111,6 +115,9 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.surfaceSecondary },
   topWrap: { position: "absolute", top: 0, left: 0, right: 0, gap: SPACING.md },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm, paddingHorizontal: SPACING.lg },
+  brandBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.brand, alignItems: "center", justifyContent: "center" },
+  brandTitle: { fontFamily: FONT.displayBold, fontSize: FSIZE.xl, color: COLORS.onSurface },
   search: { flexDirection: "row", alignItems: "center", gap: SPACING.sm, marginHorizontal: SPACING.lg, backgroundColor: COLORS.surface, borderRadius: RADIUS.md, paddingHorizontal: SPACING.lg, height: 52 },
   searchTxt: { flex: 1, fontFamily: FONT.body, fontSize: FSIZE.base, color: COLORS.onSurfaceSecondary, textAlign: "right" },
   mapPin: { width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.brandTertiary, alignItems: "center", justifyContent: "center" },

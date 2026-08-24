@@ -14,7 +14,6 @@ const TAB_KEYS = [
   { key: "destinations", t: "fav_destinations" },
   { key: "experiences", t: "fav_experiences" },
   { key: "products", t: "fav_products" },
-  { key: "trips", t: "fav_trips" },
 ];
 
 export default function Favorites() {

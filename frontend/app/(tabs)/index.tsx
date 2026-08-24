@@ -21,7 +21,7 @@ const QUICK = [
   { key: "marketplace", tkey: "q_marketplace", icon: "storefront", color: "#C39158", route: "/marketplace" },
   { key: "experiences", tkey: "q_experiences", icon: "sparkles", color: "#0F6B76", route: "/experiences" },
   { key: "map", tkey: "q_map", icon: "map", color: "#158C9B", route: "/(tabs)/map" },
-  { key: "trips", tkey: "q_trips", icon: "airplane", color: "#4A6E8C", route: "/(tabs)/trips" },
+  { key: "services", tkey: "q_services", icon: "construct", color: "#4A6E8C", route: "/services" },
 ];
 
 export default function Discover() {
@@ -151,11 +151,7 @@ export default function Discover() {
               </Section>
             )}
 
-            <Section title={t("sec_trips")} subtitle={t("sec_trips_sub")} onSeeAll={() => router.push("/(tabs)/trips")}>
-              <View style={styles.trips}>
-                {(data.trips || []).slice(0, 2).map((it: any) => <TripCard key={it.id} item={it} />)}
-              </View>
-            </Section>
+            
           </>
         )}
       </ScrollView>

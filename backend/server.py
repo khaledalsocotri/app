@@ -394,6 +394,24 @@ async def list_events():
     return await db.events.find({}, {"_id": 0}).to_list(100)
 
 
+@api.get("/services")
+async def list_services(category: Optional[str] = None, search: Optional[str] = None):
+    q: dict = {}
+    if category and category != "all":
+        q["category"] = category
+    if search:
+        q["$or"] = [{"name_ar": {"$regex": search, "$options": "i"}}, {"name_en": {"$regex": search, "$options": "i"}}]
+    return await db.services.find(q, {"_id": 0}).to_list(300)
+
+
+@api.get("/services/{service_id}")
+async def get_service(service_id: str):
+    s = await db.services.find_one({"id": service_id}, {"_id": 0})
+    if not s:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return s
+
+
 @api.get("/offers")
 async def list_offers():
     return await db.offers.find({}, {"_id": 0}).to_list(100)
@@ -694,6 +712,8 @@ _ADMIN_COLLS = {
     "offers": db.offers,
     "products": db.products,
     "experiences": db.experiences,
+    "services": db.services,
+    "events": db.events,
 }
 
 
@@ -803,6 +823,25 @@ async def startup():
                 "created_at": now_utc(),
             })
         logger.info("Seed data inserted.")
+
+    # Idempotent services seed (added in a later iteration).
+    if await db.services.count_documents({}) == 0:
+        svc_img = "https://images.unsplash.com/photo-1518998053901-5348d3961a04?q=85&w=1200"
+        await db.services.insert_many([
+            {"id": new_id("serv_"), "name_ar": "مستشفى حديبو", "name_en": "Hadibo Hospital", "category": "health",
+             "description_ar": "المستشفى الرئيسي في الجزيرة لخدمات الطوارئ والرعاية الصحية.", "description_en": "The island's main hospital for emergencies and healthcare.",
+             "cover_image": svc_img, "images": [svc_img], "location_ar": "حديبو", "location_en": "Hadibo", "phone": "+967 5 660000", "latitude": 12.6520, "longitude": 54.0230, "rating": 4.0},
+            {"id": new_id("serv_"), "name_ar": "محطة وقود حديبو", "name_en": "Hadibo Fuel Station", "category": "fuel",
+             "description_ar": "محطة وقود لتزويد المركبات قبل الرحلات الطويلة.", "description_en": "Fuel station to refuel before long trips.",
+             "cover_image": svc_img, "images": [svc_img], "location_ar": "حديبو", "location_en": "Hadibo", "phone": "", "latitude": 12.6500, "longitude": 54.0180, "rating": 3.8},
+            {"id": new_id("serv_"), "name_ar": "صراف آلي - البنك", "name_en": "Bank ATM", "category": "bank",
+             "description_ar": "خدمات مصرفية وصرافة في مركز المدينة.", "description_en": "Banking and cash services in the town center.",
+             "cover_image": svc_img, "images": [svc_img], "location_ar": "حديبو", "location_en": "Hadibo", "phone": "", "latitude": 12.6530, "longitude": 54.0200, "rating": 3.9},
+            {"id": new_id("serv_"), "name_ar": "مكتب المرشدين السياحيين", "name_en": "Tour Guides Office", "category": "guide",
+             "description_ar": "حجز مرشدين محليين وسيارات دفع رباعي للرحلات.", "description_en": "Book local guides and 4x4 vehicles for tours.",
+             "cover_image": svc_img, "images": [svc_img], "location_ar": "حديبو", "location_en": "Hadibo", "phone": "+967 5 661234", "latitude": 12.6510, "longitude": 54.0250, "rating": 4.6},
+        ])
+        logger.info("Services seed inserted.")
 
 
 @app.on_event("shutdown")

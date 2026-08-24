@@ -431,3 +431,46 @@ class TestAdminAdvanced:
         assert r2.status_code == 403
         r3 = api.delete(f"{base_url}/admin/destinations/xxx", headers=auth_headers)
         assert r3.status_code == 403
+
+
+# --------------------------- Host Reply (Reviews) ---------------------------
+class TestHostReply:
+    def test_reply_requires_admin(self, api, base_url, auth_headers):
+        # Create a review as visitor first
+        dest = api.get(f"{base_url}/destinations").json()[0]
+        r = api.post(f"{base_url}/reviews", json={
+            "item_type": "destination", "item_id": dest["id"], "rating": 4, "comment": "TEST for reply",
+        }, headers=auth_headers)
+        rev_id = r.json()["id"]
+        # Visitor cannot reply (403)
+        rr = api.put(f"{base_url}/reviews/{rev_id}/reply", json={"reply": "TEST reply"}, headers=auth_headers)
+        assert rr.status_code == 403
+
+    def test_admin_can_reply_and_it_persists(self, api, base_url, auth_headers, admin_headers):
+        dest = api.get(f"{base_url}/destinations").json()[0]
+        r = api.post(f"{base_url}/reviews", json={
+            "item_type": "destination", "item_id": dest["id"], "rating": 5, "comment": "TEST for admin reply",
+        }, headers=auth_headers)
+        rev_id = r.json()["id"]
+        rr = api.put(f"{base_url}/reviews/{rev_id}/reply", json={"reply": "شكراً لك"}, headers=admin_headers)
+        assert rr.status_code == 200, rr.text
+        assert rr.json().get("reply") == "شكراً لك"
+        assert rr.json().get("reply_by")
+        # Persistence check via list
+        listed = api.get(f"{base_url}/reviews", params={"item_type": "destination", "item_id": dest["id"]}).json()
+        mine = next((x for x in listed if x["id"] == rev_id), None)
+        assert mine is not None and mine.get("reply") == "شكراً لك"
+
+    def test_reply_empty_400(self, api, base_url, auth_headers, admin_headers):
+        dest = api.get(f"{base_url}/destinations").json()[0]
+        r = api.post(f"{base_url}/reviews", json={
+            "item_type": "destination", "item_id": dest["id"], "rating": 3, "comment": "TEST empty reply",
+        }, headers=auth_headers)
+        rev_id = r.json()["id"]
+        rr = api.put(f"{base_url}/reviews/{rev_id}/reply", json={"reply": "   "}, headers=admin_headers)
+        assert rr.status_code == 400
+
+    def test_reply_review_not_found_404(self, api, base_url, admin_headers):
+        rr = api.put(f"{base_url}/reviews/does-not-exist/reply", json={"reply": "hi"}, headers=admin_headers)
+        assert rr.status_code == 404
+

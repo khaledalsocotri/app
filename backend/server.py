@@ -549,6 +549,21 @@ async def create_review(body: ReviewInput, user: dict = Depends(get_current_user
     return review
 
 
+@api.put("/reviews/{review_id}/reply")
+async def reply_review(review_id: str, body: dict, admin: dict = Depends(require_admin)):
+    text = (body.get("reply") or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="الرد فارغ")
+    rev = await db.reviews.find_one({"id": review_id})
+    if not rev:
+        raise HTTPException(status_code=404, detail="Review not found")
+    await db.reviews.update_one(
+        {"id": review_id},
+        {"$set": {"reply": text, "reply_by": admin.get("name") or "المضيف", "reply_at": now_utc().isoformat()}},
+    )
+    return await db.reviews.find_one({"id": review_id}, {"_id": 0})
+
+
 async def _recalc_item_rating(item_type: str, item_id: str):
     """Blend the curated seed rating/count baseline with real user reviews so the
     demo data isn't wiped out by the first review."""
@@ -673,7 +688,13 @@ async def list_orders(user: dict = Depends(get_current_user)):
 
 
 # ----------------------------- Admin CRUD -----------------------------
-_ADMIN_COLLS = {"destinations": db.destinations, "trips": db.trips, "offers": db.offers}
+_ADMIN_COLLS = {
+    "destinations": db.destinations,
+    "trips": db.trips,
+    "offers": db.offers,
+    "products": db.products,
+    "experiences": db.experiences,
+}
 
 
 @api.post("/admin/{entity}")

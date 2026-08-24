@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, Switch } from "react-native";
+import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, Switch, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -54,6 +54,36 @@ const ENTITIES: Record<string, { label: string; fields: Field[] }> = {
       { k: "cover_image", t: "image", label: "الصورة" },
       { k: "discount", t: "number", label: "نسبة الخصم %" },
       { k: "valid_until_ar", t: "text", label: "صالح حتى" },
+    ],
+  },
+  products: {
+    label: "المنتجات",
+    fields: [
+      { k: "name_ar", t: "text", label: "الاسم بالعربية" },
+      { k: "name_en", t: "text", label: "الاسم بالإنجليزية" },
+      { k: "category", t: "text", label: "الفئة: crafts / culture / food / nature / services / experiences / offers" },
+      { k: "description_ar", t: "text", label: "الوصف", multiline: true },
+      { k: "cover_image", t: "image", label: "الصورة" },
+      { k: "price", t: "number", label: "السعر" },
+      { k: "seller_ar", t: "text", label: "البائع / المزوّد" },
+      { k: "availability_ar", t: "text", label: "التوفر" },
+      { k: "rating", t: "number", label: "التقييم (1-5)" },
+      { k: "in_stock", t: "bool", label: "متوفر" },
+    ],
+  },
+  experiences: {
+    label: "التجارب",
+    fields: [
+      { k: "name_ar", t: "text", label: "الاسم بالعربية" },
+      { k: "name_en", t: "text", label: "الاسم بالإنجليزية" },
+      { k: "description_ar", t: "text", label: "الوصف", multiline: true },
+      { k: "cover_image", t: "image", label: "الصورة" },
+      { k: "price", t: "number", label: "السعر للشخص" },
+      { k: "duration_ar", t: "text", label: "المدة" },
+      { k: "location_ar", t: "text", label: "الموقع" },
+      { k: "provider_ar", t: "text", label: "المزوّد" },
+      { k: "availability_ar", t: "text", label: "التوفر" },
+      { k: "rating", t: "number", label: "التقييم (1-5)" },
     ],
   },
 };
@@ -167,13 +197,13 @@ export default function AdminContent() {
         </Pressable>
       </View>
 
-      <View style={styles.tabs}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsWrap} contentContainerStyle={styles.tabs}>
         {TABS.map((t) => (
           <Pressable key={t} style={[styles.tab, entity === t && styles.tabOn]} onPress={() => setEntity(t)} testID={`admin-tab-${t}`}>
             <Text style={[styles.tabTxt, entity === t && styles.tabTxtOn]}>{ENTITIES[t].label}</Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
 
       {list === null ? (
         <LoadingState />
@@ -269,8 +299,9 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.surfaceSecondary, alignItems: "center", justifyContent: "center" },
   title: { fontFamily: FONT.displayBold, fontSize: FSIZE.xl, color: COLORS.onSurface },
   addBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.brand, alignItems: "center", justifyContent: "center" },
-  tabs: { flexDirection: "row", gap: SPACING.sm, padding: SPACING.lg, paddingBottom: 0 },
-  tab: { flex: 1, height: 40, borderRadius: RADIUS.pill, backgroundColor: COLORS.surface, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border },
+  tabsWrap: { flexGrow: 0, backgroundColor: COLORS.surface },
+  tabs: { flexDirection: "row", gap: SPACING.sm, padding: SPACING.lg, paddingBottom: SPACING.md },
+  tab: { flexShrink: 0, height: 40, paddingHorizontal: SPACING.xl, borderRadius: RADIUS.pill, backgroundColor: COLORS.surface, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border },
   tabOn: { backgroundColor: COLORS.brand, borderColor: COLORS.brand },
   tabTxt: { fontFamily: FONT.medium, fontSize: FSIZE.base, color: COLORS.onSurfaceSecondary },
   tabTxtOn: { color: "#fff", fontFamily: FONT.bold },

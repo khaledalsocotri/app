@@ -43,8 +43,9 @@ admin-ready so a future web dashboard can manage all content. React Native + Exp
 - Reviews: interactive star rating + comment on destination/experience/trip; blended into item rating.
 - **Reviews v2 (2026-06)**: photo attachments via Emergent Object Storage (`/api/upload`, public `/api/files/{path}`); "زيارة مؤكدة" verified badge when the reviewer actually booked the item.
 - **Cart & Checkout (2026-06)**: persistent client cart, marketplace cart badge, cart screen with qty steppers + delivery form; `POST /api/orders` records orders (no payment) + notification; orders shown in Account → طلباتي.
-- **Admin panel (2026-06)**: in-app, is_admin-gated (`/admin`). Dashboard stats, manage bookings (confirm/cancel + user notification), CRUD for destinations/trips/offers with image upload. Backend: `/api/admin/{entity}` CRUD, `/api/admin/bookings`, `/api/admin/bookings/{id}/status`.
-- Verified: 49/49 backend tests passing; all frontend flows verified (iterations 1 & 2).
+- **Admin panel (2026-06)**: in-app, is_admin-gated (`/admin`). Dashboard stats, manage bookings (confirm/cancel + user notification), CRUD for destinations/trips/offers/products/experiences with image upload. Backend: `/api/admin/{entity}` CRUD, `/api/admin/bookings`, `/api/admin/bookings/{id}/status`.
+- **Host replies (2026-06)**: admins can reply to any review via `PUT /api/reviews/{id}/reply` (admin-gated); reply shows as "رد المضيف" under the review.
+- Verified: backend tests passing; all frontend flows verified (iterations 1–3).
 
 ## Backlog / Remaining
 - P1: Real payment gateway (Stripe/Razorpay) — modular hook present (payment_status=unpaid on orders & bookings).

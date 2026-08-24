@@ -9,6 +9,7 @@ import { useFetch } from "@/src/hooks/useFetch";
 import { apiFetch } from "@/src/api/client";
 import { uploadImageAsync } from "@/src/api/upload";
 import { useToast } from "@/src/components/Toast";
+import { useAuth } from "@/src/context/AuthContext";
 import { Button } from "@/src/components/Button";
 
 type ItemType = "destination" | "experience" | "trip";
@@ -36,6 +37,7 @@ function StarPicker({ value, onChange, size = 34 }: { value: number; onChange: (
 
 export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemId: string }) {
   const toast = useToast();
+  const { user } = useAuth();
   const { data: reviews, reload } = useFetch<any[]>(`/reviews?item_type=${itemType}&item_id=${itemId}`, [itemId]);
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
@@ -43,9 +45,31 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [replyingId, setReplyingId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [replySaving, setReplySaving] = useState(false);
 
   const list = reviews || [];
   const avg = useMemo(() => (list.length ? list.reduce((s, r) => s + (r.rating || 0), 0) / list.length : 0), [list]);
+
+  const sendReply = async (id: string) => {
+    if (!replyText.trim()) {
+      toast.show("اكتب رداً أولاً", "error");
+      return;
+    }
+    setReplySaving(true);
+    try {
+      await apiFetch(`/reviews/${id}/reply`, { method: "PUT", body: { reply: replyText.trim() } });
+      toast.show("تم نشر ردك", "success");
+      setReplyingId(null);
+      setReplyText("");
+      reload();
+    } catch (e: any) {
+      toast.show(e.message || "تعذّر نشر الرد", "error");
+    } finally {
+      setReplySaving(false);
+    }
+  };
 
   const pickPhoto = async () => {
     const perm = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -164,6 +188,41 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
                   ))}
                 </ScrollView>
               ) : null}
+
+              {/* Host reply */}
+              {r.reply ? (
+                <View style={styles.replyBox} testID={`reply-${r.id}`}>
+                  <View style={styles.replyHead}>
+                    <Ionicons name="chatbubbles" size={13} color={COLORS.brand} />
+                    <Text style={styles.replyBy}>رد {r.reply_by || "المضيف"}</Text>
+                  </View>
+                  <Text style={styles.replyTxt}>{r.reply}</Text>
+                </View>
+              ) : user?.is_admin ? (
+                replyingId === r.id ? (
+                  <View style={styles.replyComposer}>
+                    <TextInput
+                      testID={`reply-input-${r.id}`}
+                      style={styles.replyInput}
+                      placeholder="اكتب رداً كمضيف..."
+                      placeholderTextColor={COLORS.onSurfaceSecondary}
+                      value={replyText}
+                      onChangeText={setReplyText}
+                      multiline
+                      textAlign="right"
+                    />
+                    <View style={styles.replyActions}>
+                      <Button title="نشر" icon="send" style={{ flex: 1, height: 42 }} loading={replySaving} onPress={() => sendReply(r.id)} testID={`reply-send-${r.id}`} />
+                      <Button title="إلغاء" variant="ghost" style={{ height: 42 }} onPress={() => { setReplyingId(null); setReplyText(""); }} testID={`reply-cancel-${r.id}`} />
+                    </View>
+                  </View>
+                ) : (
+                  <Pressable style={styles.replyBtn} onPress={() => { setReplyingId(r.id); setReplyText(""); }} testID={`reply-open-${r.id}`}>
+                    <Ionicons name="arrow-undo-outline" size={15} color={COLORS.brand} />
+                    <Text style={styles.replyBtnTxt}>الرد كمضيف</Text>
+                  </Pressable>
+                )
+              ) : null}
             </View>
           ))}
         </>
@@ -244,6 +303,15 @@ const styles = StyleSheet.create({
   verifiedTxt: { fontFamily: FONT.bold, fontSize: 10, color: COLORS.success },
   photoRow: { gap: SPACING.sm, marginTop: SPACING.sm },
   reviewPhoto: { width: 96, height: 96, borderRadius: RADIUS.sm, backgroundColor: COLORS.surfaceSecondary },
+  replyBox: { backgroundColor: COLORS.brandTertiary, borderRadius: RADIUS.sm, padding: SPACING.md, marginTop: SPACING.md },
+  replyHead: { flexDirection: "row", alignItems: "center", gap: 4 },
+  replyBy: { fontFamily: FONT.bold, fontSize: FSIZE.sm, color: COLORS.brand },
+  replyTxt: { fontFamily: FONT.body, fontSize: FSIZE.base, color: COLORS.onBrandTertiary, textAlign: "right", marginTop: 4, lineHeight: 22 },
+  replyBtn: { flexDirection: "row", alignItems: "center", gap: 4, alignSelf: "flex-start", marginTop: SPACING.sm },
+  replyBtnTxt: { fontFamily: FONT.bold, fontSize: FSIZE.sm, color: COLORS.brand },
+  replyComposer: { marginTop: SPACING.md, gap: SPACING.sm },
+  replyInput: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.sm, padding: SPACING.md, minHeight: 60, fontFamily: FONT.body, fontSize: FSIZE.base, color: COLORS.onSurface, textAlignVertical: "top" },
+  replyActions: { flexDirection: "row", gap: SPACING.sm },
   pickRow: { gap: SPACING.sm, width: "100%", paddingVertical: SPACING.xs },
   addPhoto: { width: 72, height: 72, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.border, borderStyle: "dashed", alignItems: "center", justifyContent: "center", gap: 2 },
   addPhotoTxt: { fontFamily: FONT.medium, fontSize: FSIZE.sm, color: COLORS.brand },

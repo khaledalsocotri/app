@@ -58,7 +58,7 @@ export default function AdminDashboard() {
           <View style={[styles.actionIcon, { backgroundColor: COLORS.brandSecondary }]}><Ionicons name="create-outline" size={22} color="#fff" /></View>
           <View style={{ flex: 1 }}>
             <Text style={styles.actionTitle}>إدارة المحتوى</Text>
-            <Text style={styles.actionSub}>إضافة وتعديل الوجهات والرحلات والعروض</Text>
+            <Text style={styles.actionSub}>الوجهات، الرحلات، المنتجات، التجارب والعروض</Text>
           </View>
           <Ionicons name="chevron-back" size={22} color={COLORS.borderStrong} />
         </Pressable>

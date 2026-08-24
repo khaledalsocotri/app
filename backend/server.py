@@ -468,8 +468,35 @@ async def create_review(body: ReviewInput, user: dict = Depends(get_current_user
         "created_at": now_utc().isoformat(),
     }
     await db.reviews.insert_one(review)
+    await _recalc_item_rating(body.item_type, body.item_id)
     review.pop("_id", None)
     return review
+
+
+async def _recalc_item_rating(item_type: str, item_id: str):
+    """Blend the curated seed rating/count baseline with real user reviews so the
+    demo data isn't wiped out by the first review."""
+    coll_map = {"destination": db.destinations, "experience": db.experiences, "trip": db.trips}
+    coll = coll_map.get(item_type)
+    if coll is None:
+        return
+    item = await coll.find_one({"id": item_id})
+    if not item:
+        return
+    # Capture the seed baseline once.
+    if "base_rating" not in item:
+        base_rating = item.get("rating", 0) or 0
+        base_count = item.get("reviews_count", 0) or 0
+        await coll.update_one({"id": item_id}, {"$set": {"base_rating": base_rating, "base_reviews_count": base_count}})
+    else:
+        base_rating = item["base_rating"]
+        base_count = item["base_reviews_count"]
+    real = await db.reviews.find({"item_type": item_type, "item_id": item_id}, {"_id": 0, "rating": 1}).to_list(5000)
+    n_real = len(real)
+    sum_real = sum(r.get("rating", 0) for r in real)
+    total = base_count + n_real
+    avg = round(((base_rating * base_count) + sum_real) / total, 1) if total else base_rating
+    await coll.update_one({"id": item_id}, {"$set": {"rating": avg, "reviews_count": total}})
 
 
 # ----------------------------- Notifications -----------------------------

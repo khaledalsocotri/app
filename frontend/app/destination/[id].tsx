@@ -10,6 +10,7 @@ import { DetailHero } from "@/src/components/DetailHero";
 import { Stars } from "@/src/components/Stars";
 import { DestinationRailCard } from "@/src/components/cards";
 import { Rail } from "@/src/components/Section";
+import { ReviewsSection } from "@/src/components/Reviews";
 import { Button } from "@/src/components/Button";
 import { LoadingState, ErrorState } from "@/src/components/States";
 
@@ -94,6 +95,8 @@ export default function DestinationDetail() {
               </View>
             </>
           ) : null}
+
+          <ReviewsSection itemType="destination" itemId={d.id} />
 
           {d.related?.length ? (
             <View style={{ marginTop: SPACING.xl, marginHorizontal: -SPACING.lg }}>

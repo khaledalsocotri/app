@@ -10,6 +10,7 @@ import { DetailHero } from "@/src/components/DetailHero";
 import { Stars } from "@/src/components/Stars";
 import { Button } from "@/src/components/Button";
 import { LoadingState, ErrorState } from "@/src/components/States";
+import { ReviewsSection } from "@/src/components/Reviews";
 
 export default function TripDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -96,6 +97,8 @@ export default function TripDetail() {
               <Text style={styles.colVal}>{t.transportation_ar}</Text>
             </View>
           </View>
+
+          <ReviewsSection itemType="trip" itemId={t.id} />
         </View>
       </ScrollView>
 

@@ -10,13 +10,13 @@ import { DetailHero } from "@/src/components/DetailHero";
 import { Stars } from "@/src/components/Stars";
 import { Button } from "@/src/components/Button";
 import { LoadingState, ErrorState } from "@/src/components/States";
+import { ReviewsSection } from "@/src/components/Reviews";
 
 export default function ExperienceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data: e, loading, error, reload } = useFetch<any>(`/experiences/${id}`, [id]);
-  const { data: reviews } = useFetch<any[]>(`/reviews?item_type=experience&item_id=${id}`, [id]);
 
   if (loading) return <View style={styles.root}><LoadingState /></View>;
   if (error || !e) return <View style={styles.root}><ErrorState message={error || undefined} onRetry={reload} /></View>;
@@ -65,20 +65,7 @@ export default function ExperienceDetail() {
             </>
           ) : null}
 
-          <Sect icon="chatbubble-ellipses-outline" title={`التقييمات (${reviews?.length || 0})`} />
-          {reviews && reviews.length > 0 ? (
-            reviews.map((r) => (
-              <View key={r.id} style={styles.review}>
-                <View style={styles.reviewHead}>
-                  <Text style={styles.reviewName}>{r.user_name}</Text>
-                  <Stars rating={r.rating} size={12} />
-                </View>
-                {r.comment ? <Text style={styles.reviewTxt}>{r.comment}</Text> : null}
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noReviews}>كن أول من يقيّم هذه التجربة</Text>
-          )}
+          <ReviewsSection itemType="experience" itemId={e.id} />
         </View>
       </ScrollView>
 

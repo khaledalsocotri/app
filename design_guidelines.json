@@ -1,0 +1,183 @@
+{
+  "app_name": "Socotra Explorer",
+  "personality": "1 iOS-Native Clean with 6 Glass / Luxe surfaces",
+  "personality_one_liner": "A cinematic, premium travel companion where generous iOS-native layout framing, high-fidelity glassmorphism, and deep turquoise accents elevate Socotra's natural beauty into a high-end booking experience.",
+  "color": {
+    "surface": "#FFFFFF",
+    "onSurface": "#111A1B",
+    "surfaceSecondary": "#F4F7F7",
+    "onSurfaceSecondary": "#38484A",
+    "surfaceTertiary": "#E7EFEF",
+    "onSurfaceTertiary": "#263638",
+    "surfaceInverse": "#0A2326",
+    "onSurfaceInverse": "#FFFFFF",
+    "brand": "#0F6B76",
+    "brandPrimary": "#158C9B",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#C39158",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#E2F1F3",
+    "onBrandTertiary": "#0E4A52",
+    "success": "#2D7A5D",
+    "onSuccess": "#FFFFFF",
+    "warning": "#B87F28",
+    "onWarning": "#FFFFFF",
+    "error": "#B83A3A",
+    "onError": "#FFFFFF",
+    "info": "#4A6E8C",
+    "onInfo": "#FFFFFF",
+    "border": "#E1E8E8",
+    "borderStrong": "#B0C5C7",
+    "divider": "#E8EEEE"
+  },
+  "typography": {
+    "displayFontFamily": "Cairo",
+    "textFontFamily": "Tajawal",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous iOS-native margins (lg/xl) around cards. Use gap inside Flex. Do not cluster elements without breathing room. Ensure proper safe-area usage.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "1",
+  "navigation": "bottom_tabs",
+  "icon_set": "Ionicons",
+  "glassmorphism": {
+    "enabled": "true",
+    "do's": [
+      "Use glass headers on scrolling destination content.",
+      "Use frosted glass overlay over brand-tinted background for bottom tab bar.",
+      "Float a glass CTA button container at the bottom of the destination detail page."
+    ],
+    "dont's": [
+      "Do not blur forms, input fields, or dense text cards.",
+      "Do not use glass if content underneath isn't adequately darkened or tinted for readability."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Discover (Home)",
+      "purpose": "Serve as the primary visual hook and entry point for Socotra's offerings.",
+      "states": {
+        "loading": "Skeleton UI matching the card structure.",
+        "empty": "No items available placeholder.",
+        "error": "Error message with 'Retry' CTA."
+      },
+      "layout": "Full-bleed hero carousel at the top with a subtle 2-stop vertical gradient scrim for text contrast. Below hero: multiple horizontal scrolling rows (Featured, Popular, Experiences, Products) mapped to `surfaceSecondary` cards with `lg` radius and `md` gap. Include a 'sticky' glass navigation header that appears on scroll."
+    },
+    {
+      "name": "Interactive Map",
+      "purpose": "Allow users to explore destinations geospatially with category filters.",
+      "states": {
+        "loading": "Map loading overlay.",
+        "empty": "No markers found for the selected category.",
+        "error": "Failed to load map data."
+      },
+      "layout": "Full-screen Google Map. Floating glass search bar at safe-area-top. A horizontal scrolling list of pill-shaped category filters below the search bar. Tapping a pin reveals a bottom-sheet (using `@gorhom/bottom-sheet`) with a destination summary card and a 'Get Directions' CTA."
+    },
+    {
+      "name": "Destination Detail",
+      "purpose": "Provide an immersive, informative view of a specific location to drive favoriting or booking.",
+      "states": {
+        "loading": "Image placeholder and skeleton text.",
+        "empty": "Destination details unavailable.",
+        "error": "Error loading destination."
+      },
+      "layout": "Cinematic full-bleed hero image with a glass header (containing back button and share/favorite). Text content sits below on `surface` with generous `xl` padding. Use modular cards for 'Activities' and 'Tags'. Important: Pin a sticky CTA ('Get Directions' or 'Book Trip') anchored at the bottom inside a glass container over scrolling content."
+    },
+    {
+      "name": "Local Marketplace",
+      "purpose": "Discover and purchase local handicrafts and services.",
+      "states": {
+        "loading": "Grid of skeleton blocks.",
+        "empty": "Illustration of a traditional basket with 'No products found' text.",
+        "error": "Error loading marketplace."
+      },
+      "layout": "2-column grid utilizing `flexWrap: 'wrap'` and `justifyContent: 'space-between'`. Each product card has an aspect ratio 1:1 image, followed by name, price in `brandPrimary`, and a seller row. A sticky category filter row (scrollable horizontally) remains pinned under the header."
+    },
+    {
+      "name": "Trips List & Detail",
+      "purpose": "Browse tourism packages and view comprehensive itinerary details.",
+      "states": {
+        "loading": "Skeleton cards.",
+        "empty": "No trips currently available.",
+        "error": "Error loading trips."
+      },
+      "layout": "List: Vertical stack of full-width cards (`surfaceSecondary`) with large cover photos and highlight metadata (duration, seats). Detail: Similar to Destination Detail but includes structured itinerary steps (timeline UI) and a persistent 'Book Now' sticky bottom CTA."
+    },
+    {
+      "name": "Account & Auth",
+      "purpose": "Manage user profile, bookings, and authenticate via Email/Google.",
+      "states": {
+        "loading": "Loading spinner on auth actions.",
+        "empty": "Not logged in state showing a cinematic background with auth options.",
+        "error": "Form validation errors displayed below inputs in `error` color."
+      },
+      "layout": "Auth: Cinematic full-screen landscape background with a dark gradient scrim. Clean, single-column input form positioned in the lower third. Account: Clean iOS settings-style list with chevron icons, user avatar at the top."
+    }
+  ],
+  "images": {
+    "hero_turquoise_beach": {
+      "url": "https://images.pexels.com/photos/33562466/pexels-photo-33562466.jpeg",
+      "alt": "Aerial view of Socotra beach with clear turquoise waters"
+    },
+    "dragon_blood_tree": {
+      "url": "https://images.unsplash.com/photo-1642425150068-422fef94a8ea?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwxfHxkcmFnb24lMjBibG9vZCUyMHRyZWUlMjBzb2NvdHJhfGVufDB8fHx8MTc4NzYwNjcwOXww&ixlib=rb-4.1.0&q=85",
+      "alt": "Iconic Dragon Blood Tree on Socotra's rocky terrain"
+    },
+    "marketplace_handicraft": {
+      "url": "https://images.unsplash.com/photo-1629218091978-f70a20a43aab?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwxfHxoYW5kbWFkZSUyMGNyYWZ0JTIwbWFya2V0fGVufDB8fHx8MTc4NzYwNjcwOXww&ixlib=rb-4.1.0&q=85",
+      "alt": "Local handmade ceramic and craft market"
+    },
+    "auth_landscape_sunset": {
+      "url": "https://images.unsplash.com/photo-1642425146676-992ad3f73e26?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwxfHxzb2NvdHJhJTIwbGFuZHNjYXBlJTIwc3Vuc2V0fGVufDB8fHx8MTc4NzYwNjcwOXww&ixlib=rb-4.1.0&q=85",
+      "alt": "Socotra landscape at sunset"
+    }
+  },
+  "haptics": {
+    "tab_press": "light",
+    "favorite_toggle": "medium",
+    "book_action_success": "success",
+    "filter_chip_select": "light",
+    "map_pin_tap": "light"
+  },
+  "instructions_to_main_agent": [
+    "Strictly follow Arabic RTL guidelines. Use React Native's `I18nManager.isRTL` to conditionally flip layouts if not natively handled by flex row. Ensure padding/margins use logical properties (e.g., `paddingStart`, `paddingEnd`).",
+    "Mirror ONLY directional icons (like back arrows or chevrons). Do not mirror universal icons like play buttons, logos, or clocks.",
+    "Implement the 'iOS-Native Clean + Glass/Luxe' fusion: Generous padding around all content blocks, use glass headers over scrolling content, and sticky bottom CTAs using blurred backgrounds.",
+    "For all images that have text overlaid on them (like the Discover Hero carousel or Destination details), MANDATORY implement a vertical gradient scrim (transparent to dark surfaceInverse at bottom) behind the text to guarantee contrast.",
+    "Do NOT use indigo, violet, or pure navy blue anywhere. Adhere to the provided Socotra-inspired teal/turquoise palette.",
+    "Typography: Use 'Cairo' for large headers/display elements and 'Tajawal' for body text. Both handle Arabic and English cleanly.",
+    "Destination Detail & Trips Detail MUST feature a sticky 'Book' or 'Get Directions' CTA wrapped in a Glass container pinned to the bottom above the home indicator, allowing content to scroll beneath it."
+  ]
+}

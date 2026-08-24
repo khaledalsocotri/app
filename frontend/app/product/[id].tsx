@@ -11,11 +11,13 @@ import { Stars } from "@/src/components/Stars";
 import { Button } from "@/src/components/Button";
 import { LoadingState, ErrorState } from "@/src/components/States";
 import { useToast } from "@/src/components/Toast";
+import { useCart } from "@/src/context/CartContext";
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const cart = useCart();
   const { data: p, loading, error, reload } = useFetch<any>(`/products/${id}`, [id]);
 
   if (loading) return <View style={styles.root}><LoadingState /></View>;
@@ -52,7 +54,7 @@ export default function ProductDetail() {
           <Text style={styles.priceLabel}>السعر</Text>
           <Text style={styles.price}>${p.price}</Text>
         </View>
-        <Button title="أضف إلى السلة" icon="cart" style={{ flex: 1 }} onPress={() => toast.show("تمت الإضافة إلى السلة", "success")} testID="add-to-cart" />
+        <Button title="أضف إلى السلة" icon="cart" style={{ flex: 1 }} onPress={() => { cart.add(p); toast.show("تمت الإضافة إلى السلة", "success"); }} testID="add-to-cart" />
       </View>
     </View>
   );

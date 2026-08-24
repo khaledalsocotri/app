@@ -40,16 +40,19 @@ admin-ready so a future web dashboard can manage all content. React Native + Exp
 - Booking flow (trip & experience) saved to DB + notification; bookings visible in Account.
 - Local marketplace (2-col grid, category chips), Experiences list, global search with filters.
 - Account: profile, bookings, notifications, logout.
-- Verified: 33/33 backend pytest passed; all key frontend flows verified.
+- Reviews: interactive star rating + comment on destination/experience/trip; blended into item rating.
+- **Reviews v2 (2026-06)**: photo attachments via Emergent Object Storage (`/api/upload`, public `/api/files/{path}`); "زيارة مؤكدة" verified badge when the reviewer actually booked the item.
+- **Cart & Checkout (2026-06)**: persistent client cart, marketplace cart badge, cart screen with qty steppers + delivery form; `POST /api/orders` records orders (no payment) + notification; orders shown in Account → طلباتي.
+- **Admin panel (2026-06)**: in-app, is_admin-gated (`/admin`). Dashboard stats, manage bookings (confirm/cancel + user notification), CRUD for destinations/trips/offers with image upload. Backend: `/api/admin/{entity}` CRUD, `/api/admin/bookings`, `/api/admin/bookings/{id}/status`.
+- Verified: 49/49 backend tests passing; all frontend flows verified (iterations 1 & 2).
 
 ## Backlog / Remaining
-- P1: Reviews submission UI (backend ready), cart/checkout for marketplace, real payment gateway
-  (Stripe/Razorpay) — modular hook already present (payment_status=unpaid).
-- P1: Web admin dashboard (backend models & endpoints already admin-ready; add admin CRUD + auth role).
+- P1: Real payment gateway (Stripe/Razorpay) — modular hook present (payment_status=unpaid on orders & bookings).
+- P2: Standalone web admin dashboard (current admin runs in-app on web + mobile for admin users).
 - P2: Google Maps API key wiring for production builds (app.json config placeholders in place).
 - P2: Push notifications (Emergent-managed) — requires deploy + build.
-- P2: Image upload via Object Storage for admin-managed content.
 - P2: Multi-language toggle (English secondary) — structure ready.
+- P3: Back-fill `verified`/`photos` on iteration-1 reviews (cosmetic; frontend already tolerates missing fields).
 
 ## Test Accounts
 See `/app/memory/test_credentials.md`.

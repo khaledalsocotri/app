@@ -14,13 +14,16 @@ import os
 import uuid
 import logging
 import secrets
+import requests
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Literal
 
 import httpx
 import bcrypt
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, Header, Query
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, Header, Query, UploadFile, File
+from fastapi.responses import Response
+from starlette.concurrency import run_in_threadpool
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -36,6 +39,51 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ["DB_NAME"]]
 
 EMERGENT_SESSION_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+
+# ---- Emergent Object Storage config ----
+STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
+STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
+EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
+APP_NAME = "socotra-explorer"
+_storage_key: Optional[str] = None
+
+
+def init_storage() -> Optional[str]:
+    global _storage_key
+    if _storage_key:
+        return _storage_key
+    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": EMERGENT_KEY}, timeout=30)
+    resp.raise_for_status()
+    _storage_key = resp.json()["storage_key"]
+    return _storage_key
+
+
+def put_object(path: str, data: bytes, content_type: str) -> dict:
+    key = init_storage()
+    resp = requests.put(
+        f"{STORAGE_URL}/objects/{path}",
+        headers={"X-Storage-Key": key, "Content-Type": content_type},
+        data=data,
+        timeout=120,
+    )
+    if resp.status_code == 503:
+        globals()["_storage_key"] = None
+        key = init_storage()
+        resp = requests.put(
+            f"{STORAGE_URL}/objects/{path}",
+            headers={"X-Storage-Key": key, "Content-Type": content_type},
+            data=data,
+            timeout=120,
+        )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def get_object(path: str):
+    key = init_storage()
+    resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
+    resp.raise_for_status()
+    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("socotra")
@@ -130,6 +178,26 @@ class ReviewInput(BaseModel):
     item_id: str
     rating: float = Field(ge=1, le=5)
     comment: Optional[str] = None
+    photos: Optional[List[str]] = None
+
+
+class OrderItemInput(BaseModel):
+    product_id: str
+    quantity: int = Field(ge=1)
+
+
+class OrderInput(BaseModel):
+    items: List[OrderItemInput]
+    full_name: str
+    phone: str
+    address: str
+    notes: Optional[str] = None
+
+
+async def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin only")
+    return user
 
 
 def _public_user(user: dict) -> dict:
@@ -457,14 +525,22 @@ async def list_reviews(item_type: str, item_id: str):
 
 @api.post("/reviews")
 async def create_review(body: ReviewInput, user: dict = Depends(get_current_user)):
+    # "Verified" if the user actually booked this trip/experience.
+    verified = False
+    if body.item_type in ("trip", "experience"):
+        booking = await db.bookings.find_one({"user_id": user["user_id"], "item_id": body.item_id})
+        verified = booking is not None
     review = {
         "id": new_id("rev_"),
         "user_id": user["user_id"],
         "user_name": user.get("name"),
+        "user_picture": user.get("picture"),
         "item_type": body.item_type,
         "item_id": body.item_id,
         "rating": body.rating,
         "comment": body.comment,
+        "photos": body.photos or [],
+        "verified": verified,
         "created_at": now_utc().isoformat(),
     }
     await db.reviews.insert_one(review)
@@ -522,6 +598,141 @@ async def admin_stats(user: dict = Depends(get_current_user)):
     }
 
 
+# ----------------------------- File upload / serve -----------------------------
+_EXT = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic"}
+
+
+@api.post("/upload")
+async def upload_file(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    data = await file.read()
+    if len(data) > 8 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="الصورة كبيرة جداً (الحد 8MB)")
+    ctype = file.content_type or "image/jpeg"
+    ext = _EXT.get(ctype, "jpg")
+    path = f"{APP_NAME}/uploads/{user['user_id']}/{uuid.uuid4().hex}.{ext}"
+    try:
+        await run_in_threadpool(put_object, path, data, ctype)
+    except requests.HTTPError as e:
+        code = e.response.status_code if e.response is not None else 500
+        if code == 402:
+            raise HTTPException(status_code=402, detail="نفدت مساحة التخزين")
+        raise HTTPException(status_code=502, detail="فشل رفع الصورة")
+    await db.uploads.insert_one({
+        "id": new_id("up_"), "owner_id": user["user_id"], "storage_path": path,
+        "content_type": ctype, "created_at": now_utc().isoformat(),
+    })
+    return {"path": path, "url": f"/api/files/{path}"}
+
+
+@api.get("/files/{path:path}")
+async def serve_file(path: str):
+    try:
+        content, ctype = await run_in_threadpool(get_object, path)
+    except Exception:
+        raise HTTPException(status_code=404, detail="File not found")
+    return Response(content=content, media_type=ctype, headers={"Cache-Control": "public, max-age=31536000"})
+
+
+# ----------------------------- Orders (checkout) -----------------------------
+@api.post("/orders")
+async def create_order(body: OrderInput, user: dict = Depends(get_current_user)):
+    if not body.items:
+        raise HTTPException(status_code=400, detail="السلة فارغة")
+    line_items = []
+    total = 0.0
+    for it in body.items:
+        p = await db.products.find_one({"id": it.product_id}, {"_id": 0})
+        if not p:
+            raise HTTPException(status_code=404, detail="منتج غير موجود")
+        subtotal = (p.get("price") or 0) * it.quantity
+        total += subtotal
+        line_items.append({
+            "product_id": p["id"], "name_ar": p.get("name_ar"), "name_en": p.get("name_en"),
+            "image": p.get("cover_image"), "price": p.get("price"), "quantity": it.quantity, "subtotal": subtotal,
+        })
+    order = {
+        "id": new_id("ord_"), "user_id": user["user_id"], "items": line_items, "total": round(total, 2),
+        "currency": "USD", "full_name": body.full_name, "phone": body.phone, "address": body.address,
+        "notes": body.notes, "status": "pending", "payment_status": "unpaid",
+        "created_at": now_utc().isoformat(),
+    }
+    await db.orders.insert_one(order)
+    await db.notifications.insert_one({
+        "id": new_id("ntf_"), "user_id": user["user_id"],
+        "title_ar": "تم استلام طلبك", "title_en": "Order received",
+        "body_ar": f"طلبك بقيمة ${order['total']} قيد التجهيز.", "body_en": f"Your order (${order['total']}) is being prepared.",
+        "type": "order", "read": False, "created_at": now_utc().isoformat(),
+    })
+    order.pop("_id", None)
+    return order
+
+
+@api.get("/orders")
+async def list_orders(user: dict = Depends(get_current_user)):
+    return await db.orders.find({"user_id": user["user_id"]}, {"_id": 0}).sort("created_at", -1).to_list(200)
+
+
+# ----------------------------- Admin CRUD -----------------------------
+_ADMIN_COLLS = {"destinations": db.destinations, "trips": db.trips, "offers": db.offers}
+
+
+@api.post("/admin/{entity}")
+async def admin_create(entity: str, body: dict, admin: dict = Depends(require_admin)):
+    coll = _ADMIN_COLLS.get(entity)
+    if coll is None:
+        raise HTTPException(status_code=404, detail="Unknown entity")
+    body["id"] = new_id(entity[:4] + "_")
+    await coll.insert_one({**body})
+    body.pop("_id", None)
+    return body
+
+
+@api.put("/admin/{entity}/{item_id}")
+async def admin_update(entity: str, item_id: str, body: dict, admin: dict = Depends(require_admin)):
+    coll = _ADMIN_COLLS.get(entity)
+    if coll is None:
+        raise HTTPException(status_code=404, detail="Unknown entity")
+    body.pop("id", None)
+    body.pop("_id", None)
+    res = await coll.update_one({"id": item_id}, {"$set": body})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Not found")
+    return await coll.find_one({"id": item_id}, {"_id": 0})
+
+
+@api.delete("/admin/{entity}/{item_id}")
+async def admin_delete(entity: str, item_id: str, admin: dict = Depends(require_admin)):
+    coll = _ADMIN_COLLS.get(entity)
+    if coll is None:
+        raise HTTPException(status_code=404, detail="Unknown entity")
+    await coll.delete_one({"id": item_id})
+    return {"ok": True}
+
+
+@api.get("/admin/bookings")
+async def admin_bookings(admin: dict = Depends(require_admin)):
+    return await db.bookings.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+@api.put("/admin/bookings/{booking_id}/status")
+async def admin_booking_status(booking_id: str, body: dict, admin: dict = Depends(require_admin)):
+    status = body.get("status")
+    if status not in ("pending", "confirmed", "cancelled"):
+        raise HTTPException(status_code=400, detail="Invalid status")
+    bk = await db.bookings.find_one({"id": booking_id})
+    if not bk:
+        raise HTTPException(status_code=404, detail="Not found")
+    await db.bookings.update_one({"id": booking_id}, {"$set": {"status": status}})
+    await db.notifications.insert_one({
+        "id": new_id("ntf_"), "user_id": bk["user_id"],
+        "title_ar": "تحديث حالة الحجز", "title_en": "Booking status updated",
+        "body_ar": f"أصبحت حالة حجزك: {'مؤكد' if status=='confirmed' else 'ملغى' if status=='cancelled' else 'قيد المراجعة'}",
+        "body_en": f"Your booking is now {status}.",
+        "type": "booking", "read": False, "created_at": now_utc().isoformat(),
+    })
+    return await db.bookings.find_one({"id": booking_id}, {"_id": 0})
+
+
 @api.get("/")
 async def root():
     return {"message": "Socotra Explorer API", "status": "ok"}
@@ -541,6 +752,12 @@ app.add_middleware(
 # ----------------------------- Startup: indexes + seed -----------------------------
 @app.on_event("startup")
 async def startup():
+    try:
+        await run_in_threadpool(init_storage)
+        logger.info("Object storage initialized.")
+    except Exception as e:
+        logger.warning(f"Object storage init failed (uploads may not work): {e}")
+
     await db.users.create_index("email", unique=True)
     await db.users.create_index("user_id", unique=True)
     await db.user_sessions.create_index("session_token", unique=True)

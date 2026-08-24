@@ -18,13 +18,15 @@ export default function Account() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [bookings, setBookings] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [view, setView] = useState<"menu" | "bookings" | "notifications">("menu");
+  const [view, setView] = useState<"menu" | "bookings" | "orders" | "notifications">("menu");
 
   const load = useCallback(async () => {
     try {
-      const [b, n] = await Promise.all([apiFetch("/bookings"), apiFetch("/notifications")]);
+      const [b, o, n] = await Promise.all([apiFetch("/bookings"), apiFetch("/orders"), apiFetch("/notifications")]);
       setBookings(b);
+      setOrders(o);
       setNotifications(n);
     } catch {}
   }, []);
@@ -33,9 +35,11 @@ export default function Account() {
 
   const menu = [
     { key: "bookings", label: "حجوزاتي", icon: "receipt-outline", badge: bookings.length, onPress: () => setView("bookings") },
+    { key: "orders", label: "طلباتي", icon: "bag-handle-outline", badge: orders.length, onPress: () => setView("orders") },
     { key: "favorites", label: "المفضلة", icon: "heart-outline", onPress: () => router.push("/(tabs)/favorites") },
     { key: "notifications", label: "الإشعارات", icon: "notifications-outline", badge: notifications.filter((n) => !n.read).length, onPress: () => setView("notifications") },
     { key: "marketplace", label: "التسويق المحلي", icon: "storefront-outline", onPress: () => router.push("/marketplace") },
+    ...(user?.is_admin ? [{ key: "admin", label: "لوحة الإدارة", icon: "shield-checkmark-outline", onPress: () => router.push("/admin") }] : []),
     { key: "settings", label: "الإعدادات", icon: "settings-outline", onPress: () => {} },
     { key: "help", label: "المساعدة والدعم", icon: "help-circle-outline", onPress: () => {} },
   ];
@@ -51,7 +55,7 @@ export default function Account() {
             <Pressable onPress={() => setView("menu")} style={styles.backBtn} testID="account-back">
               <Ionicons name="chevron-forward" size={24} color={COLORS.onSurface} />
             </Pressable>
-            <Text style={styles.subTitle}>{view === "bookings" ? "حجوزاتي" : "الإشعارات"}</Text>
+            <Text style={styles.subTitle}>{view === "bookings" ? "حجوزاتي" : view === "orders" ? "طلباتي" : "الإشعارات"}</Text>
             <View style={{ width: 40 }} />
           </View>
         ) : null}
@@ -115,6 +119,36 @@ export default function Account() {
                       <Text style={[styles.statusTxt, { color: STATUS_COLOR[b.status] }]}>{STATUS_AR[b.status]}</Text>
                       <View style={{ flex: 1 }} />
                       {b.price ? <Text style={styles.bookingPrice}>${b.price}</Text> : null}
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        )}
+
+        {/* Orders */}
+        {view === "orders" && (
+          <View style={{ padding: SPACING.lg, gap: SPACING.md }}>
+            {orders.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <Ionicons name="bag-handle-outline" size={40} color={COLORS.brandPrimary} />
+                <Text style={styles.emptyTxt}>لا توجد طلبات بعد</Text>
+              </View>
+            ) : (
+              orders.map((o) => (
+                <View key={o.id} style={[styles.booking, SHADOW.soft]} testID={`order-${o.id}`}>
+                  {o.items?.[0]?.image ? <Image source={o.items[0].image} style={styles.bookingImg} contentFit="cover" /> : null}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.bookingTitle} numberOfLines={1}>
+                      {o.items?.[0]?.name_ar}{o.items?.length > 1 ? ` +${o.items.length - 1}` : ""}
+                    </Text>
+                    <Text style={styles.bookingMeta}>{o.items?.reduce((s: number, i: any) => s + i.quantity, 0)} عناصر · {o.address}</Text>
+                    <View style={styles.bookingFooter}>
+                      <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[o.status] || COLORS.warning }]} />
+                      <Text style={[styles.statusTxt, { color: STATUS_COLOR[o.status] || COLORS.warning }]}>{STATUS_AR[o.status] || o.status}</Text>
+                      <View style={{ flex: 1 }} />
+                      <Text style={styles.bookingPrice}>${o.total}</Text>
                     </View>
                   </View>
                 </View>

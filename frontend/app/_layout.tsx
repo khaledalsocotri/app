@@ -11,6 +11,7 @@ import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { useAppFonts } from "@/src/hooks/use-app-fonts";
 import { AuthProvider } from "@/src/context/AuthContext";
 import { FavoritesProvider } from "@/src/context/FavoritesContext";
+import { CartProvider } from "@/src/context/CartContext";
 import { ToastProvider } from "@/src/components/Toast";
 
 LogBox.ignoreAllLogs(true);
@@ -39,21 +40,24 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <AuthProvider>
             <FavoritesProvider>
-              <ToastProvider>
-                <StatusBar style="dark" />
-                <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#FFFFFF" } }}>
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="(auth)" />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="destination/[id]" options={{ animation: "slide_from_right" }} />
-                  <Stack.Screen name="trip/[id]" options={{ animation: "slide_from_right" }} />
-                  <Stack.Screen name="experience/[id]" options={{ animation: "slide_from_right" }} />
-                  <Stack.Screen name="product/[id]" options={{ animation: "slide_from_right" }} />
-                  <Stack.Screen name="booking" options={{ presentation: "modal" }} />
-                  <Stack.Screen name="search" options={{ animation: "fade" }} />
-                  <Stack.Screen name="marketplace" options={{ animation: "slide_from_right" }} />
-                </Stack>
-              </ToastProvider>
+              <CartProvider>
+                <ToastProvider>
+                  <StatusBar style="dark" />
+                  <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#FFFFFF" } }}>
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="(auth)" />
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="destination/[id]" options={{ animation: "slide_from_right" }} />
+                    <Stack.Screen name="trip/[id]" options={{ animation: "slide_from_right" }} />
+                    <Stack.Screen name="experience/[id]" options={{ animation: "slide_from_right" }} />
+                    <Stack.Screen name="product/[id]" options={{ animation: "slide_from_right" }} />
+                    <Stack.Screen name="booking" options={{ presentation: "modal" }} />
+                    <Stack.Screen name="cart" options={{ animation: "slide_from_right" }} />
+                    <Stack.Screen name="search" options={{ animation: "fade" }} />
+                    <Stack.Screen name="marketplace" options={{ animation: "slide_from_right" }} />
+                  </Stack>
+                </ToastProvider>
+              </CartProvider>
             </FavoritesProvider>
           </AuthProvider>
         </SafeAreaProvider>

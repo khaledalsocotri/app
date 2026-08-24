@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Pressable, Share, Platform, Dimensions, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, Share, Platform, useWindowDimensions, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, SPACING } from "@/src/theme/theme";
 import { FavoriteButton } from "./FavoriteButton";
 
-const { width } = Dimensions.get("window");
 const H = 320;
 
 export function DetailHero({
@@ -53,6 +52,7 @@ export function DetailHero({
 }
 
 function ScrollGallery({ images }: { images: string[] }) {
+  const { width } = useWindowDimensions();
   if (images.length <= 1) {
     return (
       <View style={{ height: H, width: "100%" }}>

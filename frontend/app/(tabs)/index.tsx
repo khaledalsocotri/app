@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,8 +14,6 @@ import { FavoriteButton } from "@/src/components/FavoriteButton";
 import { Stars } from "@/src/components/Stars";
 import { LoadingState, ErrorState } from "@/src/components/States";
 
-const { width } = Dimensions.get("window");
-const HERO_W = width - SPACING.lg * 2;
 const TABBAR = 92;
 
 const QUICK = [
@@ -29,6 +27,8 @@ export default function Discover() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const { width } = useWindowDimensions();
+  const HERO_W = Math.min(width, 640) - SPACING.lg * 2;
   const { data, loading, error, reload } = useFetch<any>("/discover");
 
   return (
@@ -73,7 +73,7 @@ export default function Discover() {
               {(data.featured_destinations || []).map((item: any) => (
                 <Pressable
                   key={item.id}
-                  style={[styles.hero, SHADOW.card]}
+                  style={[styles.hero, { width: HERO_W }, SHADOW.card]}
                   onPress={() => router.push(`/destination/${item.id}`)}
                   testID={`hero-${item.id}`}
                 >
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   searchTxt: { fontFamily: FONT.body, fontSize: FSIZE.base, color: COLORS.onSurfaceSecondary },
 
   heroRail: { paddingHorizontal: SPACING.lg, gap: SPACING.md },
-  hero: { width: HERO_W, height: 230, borderRadius: RADIUS.lg, overflow: "hidden", backgroundColor: COLORS.surfaceSecondary },
+  hero: { height: 230, borderRadius: RADIUS.lg, overflow: "hidden", backgroundColor: COLORS.surfaceSecondary },
   heroScrim: { position: "absolute", left: 0, right: 0, bottom: 0, height: 150 },
   heroFav: { position: "absolute", top: SPACING.md, right: SPACING.md },
   featBadge: { position: "absolute", top: SPACING.md, left: SPACING.md, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: COLORS.brandSecondary, paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.pill },

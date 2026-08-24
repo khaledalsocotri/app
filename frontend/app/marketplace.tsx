@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, Pressable, Dimensions } from "react-native";
+import { View, Text, StyleSheet, FlatList, Pressable, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -7,15 +7,18 @@ import { COLORS, SPACING, FONT, FSIZE } from "@/src/theme/theme";
 import { useFetch } from "@/src/hooks/useFetch";
 import { CategoryChips } from "@/src/components/CategoryChips";
 import { ProductCard } from "@/src/components/cards";
+import { useCart } from "@/src/context/CartContext";
 import { LoadingState, ErrorState, EmptyState } from "@/src/components/States";
 
-const { width } = Dimensions.get("window");
-const COL_W = (width - SPACING.lg * 2 - SPACING.md) / 2;
+const COL_GAP = SPACING.md;
 
 export default function Marketplace() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const COL_W = (Math.min(width, 640) - SPACING.lg * 2 - COL_GAP) / 2;
   const [category, setCategory] = useState("all");
+  const cart = useCart();
   const { data: cats } = useFetch<any[]>("/marketplace/categories");
   const { data: products, loading, error, reload } = useFetch<any[]>(
     `/products${category !== "all" ? `?category=${category}` : ""}`,
@@ -35,6 +38,12 @@ export default function Marketplace() {
             <Text style={styles.title}>التسويق المحلي</Text>
             <Text style={styles.sub}>حرف ومنتجات وتجارب سقطرية أصيلة</Text>
           </View>
+          <Pressable style={styles.cartBtn} onPress={() => router.push("/cart")} testID="marketplace-cart">
+            <Ionicons name="cart-outline" size={24} color={COLORS.onSurface} />
+            {cart.count > 0 ? (
+              <View style={styles.cartBadge}><Text style={styles.cartBadgeTxt}>{cart.count}</Text></View>
+            ) : null}
+          </Pressable>
         </View>
         <CategoryChips chips={chips} active={category} onChange={setCategory} />
       </View>
@@ -64,6 +73,9 @@ const styles = StyleSheet.create({
   header: { paddingBottom: SPACING.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: COLORS.divider },
   headerRow: { flexDirection: "row", alignItems: "center", gap: SPACING.md, paddingHorizontal: SPACING.lg, marginBottom: SPACING.md },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.surfaceSecondary, alignItems: "center", justifyContent: "center" },
+  cartBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.surfaceSecondary, alignItems: "center", justifyContent: "center" },
+  cartBadge: { position: "absolute", top: 2, left: 2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.error, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
+  cartBadgeTxt: { fontFamily: FONT.bold, fontSize: 10, color: "#fff" },
   title: { fontFamily: FONT.displayBold, fontSize: FSIZE.xxl, color: COLORS.onSurface, textAlign: "right" },
   sub: { fontFamily: FONT.body, fontSize: FSIZE.sm, color: COLORS.onSurfaceSecondary, textAlign: "right" },
 });

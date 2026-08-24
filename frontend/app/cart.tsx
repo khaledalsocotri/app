@@ -6,6 +6,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE, SHADOW } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { useCart } from "@/src/context/CartContext";
 import { apiFetch } from "@/src/api/client";
 import { TextField } from "@/src/components/TextField";
@@ -20,6 +21,7 @@ export default function Cart() {
   const toast = useToast();
   const { user } = useAuth();
   const { items, total, count, setQty, remove, clear } = useCart();
+  const { t } = useI18n();
 
   const [name, setName] = useState(user?.name || "");
   const [phone, setPhone] = useState("");
@@ -52,7 +54,7 @@ export default function Cart() {
         },
       });
       clear();
-      toast.show("تم إرسال طلبك بنجاح ✓", "success");
+      toast.show(t("order_success"), "success");
       router.back();
     } catch (e: any) {
       toast.show(e.message || "فشل إرسال الطلب", "error");
@@ -67,15 +69,15 @@ export default function Cart() {
         <Pressable onPress={() => router.back()} style={styles.backBtn} testID="cart-back">
           <Ionicons name="chevron-forward" size={24} color={COLORS.onSurface} />
         </Pressable>
-        <Text style={styles.headerTitle}>سلة التسوق</Text>
+        <Text style={styles.headerTitle}>{t("cart_title")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {count === 0 ? (
         <View style={{ flex: 1 }}>
-          <EmptyState icon="cart-outline" title="سلتك فارغة" subtitle="أضف منتجات من التسويق المحلي" />
+          <EmptyState icon="cart-outline" title={t("cart_empty")} subtitle={t("cart_empty_sub")} />
           <View style={{ paddingHorizontal: SPACING.lg }}>
-            <Button title="تصفح المنتجات" icon="storefront" onPress={() => router.replace("/marketplace")} testID="browse-products" />
+            <Button title={t("browse_products")} icon="storefront" onPress={() => router.replace("/marketplace")} testID="browse-products" />
           </View>
         </View>
       ) : (
@@ -107,24 +109,24 @@ export default function Cart() {
               </View>
             ))}
 
-            <Text style={styles.sectionTitle}>معلومات التوصيل</Text>
-            <TextField testID="cart-name" label="الاسم الكامل" icon="person-outline" placeholder="اسمك" value={name} onChangeText={setName} error={errors.name} />
-            <TextField testID="cart-phone" label="رقم الهاتف" icon="call-outline" placeholder="+967..." keyboardType="phone-pad" value={phone} onChangeText={setPhone} error={errors.phone} />
-            <TextField testID="cart-address" label="عنوان التوصيل" icon="location-outline" placeholder="المدينة، الحي" value={address} onChangeText={setAddress} error={errors.address} />
-            <TextField testID="cart-notes" label="ملاحظات (اختياري)" icon="chatbox-outline" placeholder="أي تفاصيل إضافية" value={notes} onChangeText={setNotes} multiline />
+            <Text style={styles.sectionTitle}>{t("delivery_info")}</Text>
+            <TextField testID="cart-name" label={t("full_name")} icon="person-outline" placeholder="اسمك" value={name} onChangeText={setName} error={errors.name} />
+            <TextField testID="cart-phone" label={t("phone")} icon="call-outline" placeholder="+967..." keyboardType="phone-pad" value={phone} onChangeText={setPhone} error={errors.phone} />
+            <TextField testID="cart-address" label={t("address")} icon="location-outline" placeholder="المدينة، الحي" value={address} onChangeText={setAddress} error={errors.address} />
+            <TextField testID="cart-notes" label={t("notes_optional")} icon="chatbox-outline" placeholder="أي تفاصيل إضافية" value={notes} onChangeText={setNotes} multiline />
 
             <View style={styles.paymentNote}>
               <Ionicons name="information-circle-outline" size={18} color={COLORS.info} />
-              <Text style={styles.paymentTxt}>سيتم تسجيل طلبك وسنتواصل معك للتأكيد والدفع عند الاستلام.</Text>
+              <Text style={styles.paymentTxt}>{t("payment_note_cart")}</Text>
             </View>
           </KeyboardAwareScrollView>
 
           <View style={[styles.cta, { paddingBottom: insets.bottom + SPACING.sm }]}>
             <View style={styles.totalCol}>
-              <Text style={styles.totalLabel}>الإجمالي ({count})</Text>
+              <Text style={styles.totalLabel}>{t("total")} ({count})</Text>
               <Text style={styles.total}>${total.toFixed(2)}</Text>
             </View>
-            <Button title="إتمام الطلب" icon="checkmark-circle" style={{ flex: 1 }} loading={submitting} onPress={checkout} testID="checkout-button" />
+            <Button title={t("place_order")} icon="checkmark-circle" style={{ flex: 1 }} loading={submitting} onPress={checkout} testID="checkout-button" />
           </View>
         </>
       )}

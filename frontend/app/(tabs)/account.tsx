@@ -7,16 +7,18 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE, SHADOW } from "@/src/theme/theme";
 import { apiFetch } from "@/src/api/client";
 import { useAuth } from "@/src/context/AuthContext";
+import { useI18n } from "@/src/context/LanguageContext";
 
 const TABBAR = 92;
 
-const STATUS_AR: Record<string, string> = { pending: "قيد المراجعة", confirmed: "مؤكد", cancelled: "ملغى" };
+const STATUS_KEY: Record<string, string> = { pending: "status_pending", confirmed: "status_confirmed", cancelled: "status_cancelled" };
 const STATUS_COLOR: Record<string, string> = { pending: COLORS.warning, confirmed: COLORS.success, cancelled: COLORS.error };
 
 export default function Account() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { t, lang, toggle, pick } = useI18n();
   const [bookings, setBookings] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -34,14 +36,15 @@ export default function Account() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const menu = [
-    { key: "bookings", label: "حجوزاتي", icon: "receipt-outline", badge: bookings.length, onPress: () => setView("bookings") },
-    { key: "orders", label: "طلباتي", icon: "bag-handle-outline", badge: orders.length, onPress: () => setView("orders") },
-    { key: "favorites", label: "المفضلة", icon: "heart-outline", onPress: () => router.push("/(tabs)/favorites") },
-    { key: "notifications", label: "الإشعارات", icon: "notifications-outline", badge: notifications.filter((n) => !n.read).length, onPress: () => setView("notifications") },
-    { key: "marketplace", label: "التسويق المحلي", icon: "storefront-outline", onPress: () => router.push("/marketplace") },
-    ...(user?.is_admin ? [{ key: "admin", label: "لوحة الإدارة", icon: "shield-checkmark-outline", onPress: () => router.push("/admin") }] : []),
-    { key: "settings", label: "الإعدادات", icon: "settings-outline", onPress: () => {} },
-    { key: "help", label: "المساعدة والدعم", icon: "help-circle-outline", onPress: () => {} },
+    { key: "bookings", label: t("my_bookings"), icon: "receipt-outline", badge: bookings.length, onPress: () => setView("bookings") },
+    { key: "orders", label: t("my_orders"), icon: "bag-handle-outline", badge: orders.length, onPress: () => setView("orders") },
+    { key: "favorites", label: t("tab_favorites"), icon: "heart-outline", onPress: () => router.push("/(tabs)/favorites") },
+    { key: "notifications", label: t("notifications"), icon: "notifications-outline", badge: notifications.filter((n) => !n.read).length, onPress: () => setView("notifications") },
+    { key: "marketplace", label: t("local_market"), icon: "storefront-outline", onPress: () => router.push("/marketplace") },
+    ...(user?.is_admin ? [{ key: "admin", label: t("admin_panel"), icon: "shield-checkmark-outline", onPress: () => router.push("/admin") }] : []),
+    { key: "language", label: `${t("language")}: ${lang === "ar" ? "العربية" : "English"}`, icon: "language-outline", onPress: toggle },
+    { key: "settings", label: t("settings"), icon: "settings-outline", onPress: () => {} },
+    { key: "help", label: t("help_support"), icon: "help-circle-outline", onPress: () => {} },
   ];
 
   return (
@@ -55,7 +58,7 @@ export default function Account() {
             <Pressable onPress={() => setView("menu")} style={styles.backBtn} testID="account-back">
               <Ionicons name="chevron-forward" size={24} color={COLORS.onSurface} />
             </Pressable>
-            <Text style={styles.subTitle}>{view === "bookings" ? "حجوزاتي" : view === "orders" ? "طلباتي" : "الإشعارات"}</Text>
+            <Text style={styles.subTitle}>{view === "bookings" ? t("my_bookings") : view === "orders" ? t("my_orders") : t("notifications")}</Text>
             <View style={{ width: 40 }} />
           </View>
         ) : null}
@@ -73,7 +76,7 @@ export default function Account() {
             <Text style={styles.name}>{user?.name}</Text>
             <Text style={styles.email}>{user?.email}</Text>
             {user?.is_admin ? (
-              <View style={styles.adminBadge}><Text style={styles.adminTxt}>مدير</Text></View>
+              <View style={styles.adminBadge}><Text style={styles.adminTxt}>{t("admin_badge")}</Text></View>
             ) : null}
           </View>
         )}
@@ -94,7 +97,7 @@ export default function Account() {
         {view === "menu" && (
           <Pressable style={styles.logout} onPress={logout} testID="logout-button">
             <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
-            <Text style={styles.logoutTxt}>تسجيل الخروج</Text>
+            <Text style={styles.logoutTxt}>{t("logout")}</Text>
           </Pressable>
         )}
 
@@ -104,19 +107,19 @@ export default function Account() {
             {bookings.length === 0 ? (
               <View style={styles.emptyBox}>
                 <Ionicons name="receipt-outline" size={40} color={COLORS.brandPrimary} />
-                <Text style={styles.emptyTxt}>لا توجد حجوزات بعد</Text>
+                <Text style={styles.emptyTxt}>{t("no_bookings")}</Text>
               </View>
             ) : (
               bookings.map((b) => (
                 <View key={b.id} style={[styles.booking, SHADOW.soft]} testID={`booking-${b.id}`}>
                   {b.item_image ? <Image source={b.item_image} style={styles.bookingImg} contentFit="cover" /> : null}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.bookingTitle} numberOfLines={1}>{b.item_name_ar}</Text>
-                    <Text style={styles.bookingMeta}>{b.booking_type === "trip" ? "رحلة" : "تجربة"} · {b.guests} أشخاص</Text>
-                    {b.date ? <Text style={styles.bookingMeta}>التاريخ: {b.date}</Text> : null}
+                    <Text style={styles.bookingTitle} numberOfLines={1}>{pick(b, "item_name")}</Text>
+                    <Text style={styles.bookingMeta}>{b.booking_type === "trip" ? t("trip") : t("experience")} · {b.guests} {t("people")}</Text>
+                    {b.date ? <Text style={styles.bookingMeta}>{t("date_label")}: {b.date}</Text> : null}
                     <View style={styles.bookingFooter}>
                       <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[b.status] }]} />
-                      <Text style={[styles.statusTxt, { color: STATUS_COLOR[b.status] }]}>{STATUS_AR[b.status]}</Text>
+                      <Text style={[styles.statusTxt, { color: STATUS_COLOR[b.status] }]}>{t(STATUS_KEY[b.status])}</Text>
                       <View style={{ flex: 1 }} />
                       {b.price ? <Text style={styles.bookingPrice}>${b.price}</Text> : null}
                     </View>
@@ -133,7 +136,7 @@ export default function Account() {
             {orders.length === 0 ? (
               <View style={styles.emptyBox}>
                 <Ionicons name="bag-handle-outline" size={40} color={COLORS.brandPrimary} />
-                <Text style={styles.emptyTxt}>لا توجد طلبات بعد</Text>
+                <Text style={styles.emptyTxt}>{t("no_orders")}</Text>
               </View>
             ) : (
               orders.map((o) => (
@@ -141,12 +144,12 @@ export default function Account() {
                   {o.items?.[0]?.image ? <Image source={o.items[0].image} style={styles.bookingImg} contentFit="cover" /> : null}
                   <View style={{ flex: 1 }}>
                     <Text style={styles.bookingTitle} numberOfLines={1}>
-                      {o.items?.[0]?.name_ar}{o.items?.length > 1 ? ` +${o.items.length - 1}` : ""}
+                      {lang === "en" ? (o.items?.[0]?.name_en || o.items?.[0]?.name_ar) : o.items?.[0]?.name_ar}{o.items?.length > 1 ? ` +${o.items.length - 1}` : ""}
                     </Text>
-                    <Text style={styles.bookingMeta}>{o.items?.reduce((s: number, i: any) => s + i.quantity, 0)} عناصر · {o.address}</Text>
+                    <Text style={styles.bookingMeta}>{o.items?.reduce((s: number, i: any) => s + i.quantity, 0)} {t("items")} · {o.address}</Text>
                     <View style={styles.bookingFooter}>
                       <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[o.status] || COLORS.warning }]} />
-                      <Text style={[styles.statusTxt, { color: STATUS_COLOR[o.status] || COLORS.warning }]}>{STATUS_AR[o.status] || o.status}</Text>
+                      <Text style={[styles.statusTxt, { color: STATUS_COLOR[o.status] || COLORS.warning }]}>{t(STATUS_KEY[o.status]) || o.status}</Text>
                       <View style={{ flex: 1 }} />
                       <Text style={styles.bookingPrice}>${o.total}</Text>
                     </View>
@@ -163,15 +166,15 @@ export default function Account() {
             {notifications.length === 0 ? (
               <View style={styles.emptyBox}>
                 <Ionicons name="notifications-off-outline" size={40} color={COLORS.brandPrimary} />
-                <Text style={styles.emptyTxt}>لا توجد إشعارات</Text>
+                <Text style={styles.emptyTxt}>{t("no_notifications")}</Text>
               </View>
             ) : (
               notifications.map((n) => (
                 <View key={n.id} style={[styles.notif, SHADOW.soft]}>
                   <View style={styles.notifIcon}><Ionicons name="notifications" size={18} color={COLORS.brand} /></View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.notifTitle}>{n.title_ar}</Text>
-                    <Text style={styles.notifBody}>{n.body_ar}</Text>
+                    <Text style={styles.notifTitle}>{lang === "en" && n.title_en ? n.title_en : n.title_ar}</Text>
+                    <Text style={styles.notifBody}>{lang === "en" && n.body_en ? n.body_en : n.body_ar}</Text>
                   </View>
                 </View>
               ))

@@ -12,12 +12,14 @@ import { Button } from "@/src/components/Button";
 import { LoadingState, ErrorState } from "@/src/components/States";
 import { useToast } from "@/src/components/Toast";
 import { useCart } from "@/src/context/CartContext";
+import { useI18n } from "@/src/context/LanguageContext";
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const cart = useCart();
+  const { t, pick, lang } = useI18n();
   const { data: p, loading, error, reload } = useFetch<any>(`/products/${id}`, [id]);
 
   if (loading) return <View style={styles.root}><LoadingState /></View>;
@@ -28,13 +30,13 @@ export default function ProductDetail() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         <DetailHero images={p.images} favType="product" favId={p.id} shareTitle={p.name_ar} />
         <View style={styles.body}>
-          <Text style={styles.title}>{p.name_ar}</Text>
-          <Text style={styles.subtitle}>{p.name_en}</Text>
+          <Text style={styles.title}>{pick(p, "name")}</Text>
+          <Text style={styles.subtitle}>{lang === "en" ? p.name_ar : p.name_en}</Text>
 
           <View style={styles.metaRow}>
             <View style={styles.sellerBox}>
               <Ionicons name="storefront-outline" size={18} color={COLORS.brand} />
-              <Text style={styles.seller}>{p.seller_ar}</Text>
+              <Text style={styles.seller}>{pick(p, "seller")}</Text>
             </View>
             <Stars rating={p.rating} size={14} />
           </View>
@@ -44,17 +46,17 @@ export default function ProductDetail() {
             <Text style={[styles.availTxt, { color: p.in_stock ? COLORS.success : COLORS.error }]}>{p.availability_ar}</Text>
           </View>
 
-          <Text style={styles.desc}>{p.description_ar}</Text>
+          <Text style={styles.desc}>{pick(p, "description")}</Text>
         </View>
       </ScrollView>
 
       <View style={[styles.cta, { paddingBottom: insets.bottom + SPACING.sm }]}>
         <BlurView intensity={Platform.OS === "ios" ? 50 : 100} tint="light" style={StyleSheet.absoluteFill as any} />
         <View style={styles.priceCol}>
-          <Text style={styles.priceLabel}>السعر</Text>
+          <Text style={styles.priceLabel}>{t("price")}</Text>
           <Text style={styles.price}>${p.price}</Text>
         </View>
-        <Button title="أضف إلى السلة" icon="cart" style={{ flex: 1 }} onPress={() => { cart.add(p); toast.show("تمت الإضافة إلى السلة", "success"); }} testID="add-to-cart" />
+        <Button title={t("add_to_cart")} icon="cart" style={{ flex: 1 }} onPress={() => { cart.add(p); toast.show(t("added_to_cart"), "success"); }} testID="add-to-cart" />
       </View>
     </View>
   );

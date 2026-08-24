@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE } from "@/src/theme/theme";
 import { useFetch } from "@/src/hooks/useFetch";
+import { useI18n } from "@/src/context/LanguageContext";
 import { DetailHero } from "@/src/components/DetailHero";
 import { Stars } from "@/src/components/Stars";
 import { Button } from "@/src/components/Button";
@@ -16,15 +17,16 @@ export default function ExperienceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t, pick } = useI18n();
   const { data: e, loading, error, reload } = useFetch<any>(`/experiences/${id}`, [id]);
 
   if (loading) return <View style={styles.root}><LoadingState /></View>;
   if (error || !e) return <View style={styles.root}><ErrorState message={error || undefined} onRetry={reload} /></View>;
 
   const info = [
-    { icon: "time-outline", label: "المدة", value: e.duration_ar },
-    { icon: "location-outline", label: "الموقع", value: e.location_ar },
-    { icon: "checkmark-circle-outline", label: "التوفر", value: e.availability_ar },
+    { icon: "time-outline", label: t("duration"), value: e.duration_ar },
+    { icon: "location-outline", label: t("location_label"), value: e.location_ar },
+    { icon: "checkmark-circle-outline", label: t("availability"), value: e.availability_ar },
   ];
 
   return (
@@ -32,11 +34,11 @@ export default function ExperienceDetail() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         <DetailHero images={e.images} favType="experience" favId={e.id} shareTitle={e.name_ar} />
         <View style={styles.body}>
-          <Text style={styles.title}>{e.name_ar}</Text>
+          <Text style={styles.title}>{pick(e, "name")}</Text>
           <View style={styles.metaRow}>
             <View style={styles.providerBox}>
               <Ionicons name="person-circle-outline" size={18} color={COLORS.brand} />
-              <Text style={styles.provider}>{e.provider_ar}</Text>
+              <Text style={styles.provider}>{pick(e, "provider")}</Text>
             </View>
             <View style={styles.ratingBox}>
               <Stars rating={e.rating} size={14} />
@@ -44,7 +46,7 @@ export default function ExperienceDetail() {
             </View>
           </View>
 
-          <Text style={styles.desc}>{e.description_ar}</Text>
+          <Text style={styles.desc}>{pick(e, "description")}</Text>
 
           <View style={styles.infoGrid}>
             {info.map((it) => (
@@ -58,7 +60,7 @@ export default function ExperienceDetail() {
 
           {e.included?.length ? (
             <>
-              <Sect icon="gift-outline" title="يشمل" />
+              <Sect icon="gift-outline" title={t("includes")} />
               <View style={styles.chips}>
                 {e.included.map((x: string) => <View key={x} style={styles.chip}><Text style={styles.chipTxt}>{x}</Text></View>)}
               </View>
@@ -72,10 +74,10 @@ export default function ExperienceDetail() {
       <View style={[styles.cta, { paddingBottom: insets.bottom + SPACING.sm }]}>
         <BlurView intensity={Platform.OS === "ios" ? 50 : 100} tint="light" style={StyleSheet.absoluteFill as any} />
         <View style={styles.priceCol}>
-          <Text style={styles.priceLabel}>السعر للشخص</Text>
+          <Text style={styles.priceLabel}>{t("price")} / {t("currency_per_person")}</Text>
           <Text style={styles.price}>${e.price}</Text>
         </View>
-        <Button title="احجز التجربة" icon="sparkles" style={{ flex: 1 }} onPress={() => router.push({ pathname: "/booking", params: { type: "experience", id: e.id } })} testID="book-experience" />
+        <Button title={t("book_experience")} icon="sparkles" style={{ flex: 1 }} onPress={() => router.push({ pathname: "/booking", params: { type: "experience", id: e.id } })} testID="book-experience" />
       </View>
     </View>
   );

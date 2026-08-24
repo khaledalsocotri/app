@@ -6,6 +6,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE } from "@/src/theme/theme";
 import { useFetch } from "@/src/hooks/useFetch";
+import { useI18n } from "@/src/context/LanguageContext";
 import { DetailHero } from "@/src/components/DetailHero";
 import { Stars } from "@/src/components/Stars";
 import { DestinationRailCard } from "@/src/components/cards";
@@ -17,17 +18,18 @@ import { LoadingState, ErrorState } from "@/src/components/States";
 export default function DestinationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const { t, pick, lang } = useI18n();
   const { data: d, loading, error, reload } = useFetch<any>(`/destinations/${id}`, [id]);
 
   if (loading) return <View style={styles.root}><LoadingState /></View>;
   if (error || !d) return <View style={styles.root}><ErrorState message={error || undefined} onRetry={reload} /></View>;
 
   const info = [
-    { icon: "calendar-outline", label: "أفضل وقت", value: d.best_time_ar },
-    { icon: "time-outline", label: "المدة", value: d.duration_ar },
-    { icon: "trending-up-outline", label: "الصعوبة", value: d.difficulty_ar },
-    { icon: "car-outline", label: "المركبة", value: d.vehicle_ar },
-    { icon: "wifi-outline", label: "الإنترنت", value: d.internet_ar },
+    { icon: "calendar-outline", label: t("best_time"), value: d.best_time_ar },
+    { icon: "time-outline", label: t("duration"), value: d.duration_ar },
+    { icon: "trending-up-outline", label: t("difficulty"), value: d.difficulty_ar },
+    { icon: "car-outline", label: t("vehicle"), value: d.vehicle_ar },
+    { icon: "wifi-outline", label: t("internet"), value: d.internet_ar },
   ];
 
   const openDirections = () => {
@@ -45,12 +47,12 @@ export default function DestinationDetail() {
         <DetailHero images={d.images} favType="destination" favId={d.id} shareTitle={d.name_ar} />
 
         <View style={styles.body}>
-          <Text style={styles.title}>{d.name_ar}</Text>
-          <Text style={styles.subtitle}>{d.name_en}</Text>
+          <Text style={styles.title}>{pick(d, "name")}</Text>
+          <Text style={styles.subtitle}>{lang === "en" ? d.name_ar : d.name_en}</Text>
           <View style={styles.metaRow}>
             <View style={styles.locBox}>
               <Ionicons name="location" size={16} color={COLORS.brand} />
-              <Text style={styles.locTxt}>{d.location_ar}</Text>
+              <Text style={styles.locTxt}>{pick(d, "location")}</Text>
             </View>
             <View style={styles.ratingBox}>
               <Stars rating={d.rating} size={14} />
@@ -58,7 +60,7 @@ export default function DestinationDetail() {
             </View>
           </View>
 
-          <Text style={styles.desc}>{d.description_ar}</Text>
+          <Text style={styles.desc}>{pick(d, "description")}</Text>
 
           {/* Info grid */}
           <View style={styles.infoGrid}>
@@ -71,12 +73,12 @@ export default function DestinationDetail() {
             ))}
           </View>
 
-          <SectionTitle icon="navigate-outline" title="كيفية الوصول" />
+          <SectionTitle icon="navigate-outline" title={t("how_to_get")} />
           <Text style={styles.desc}>{d.how_to_get_ar}</Text>
 
           {d.activities?.length ? (
             <>
-              <SectionTitle icon="bicycle-outline" title="الأنشطة المتاحة" />
+              <SectionTitle icon="bicycle-outline" title={t("available_activities")} />
               <View style={styles.chips}>
                 {d.activities.map((a: string) => (
                   <View key={a} style={styles.chip}><Text style={styles.chipTxt}>{a}</Text></View>
@@ -87,7 +89,7 @@ export default function DestinationDetail() {
 
           {d.nearby_services?.length ? (
             <>
-              <SectionTitle icon="business-outline" title="الخدمات القريبة" />
+              <SectionTitle icon="business-outline" title={t("nearby_services")} />
               <View style={styles.chips}>
                 {d.nearby_services.map((s: string) => (
                   <View key={s} style={[styles.chip, styles.chipAlt]}><Text style={styles.chipTxt}>{s}</Text></View>
@@ -100,7 +102,7 @@ export default function DestinationDetail() {
 
           {d.related?.length ? (
             <View style={{ marginTop: SPACING.xl, marginHorizontal: -SPACING.lg }}>
-              <SectionTitle icon="compass-outline" title="وجهات مشابهة" style={{ marginHorizontal: SPACING.lg }} />
+              <SectionTitle icon="compass-outline" title={t("similar_destinations")} style={{ marginHorizontal: SPACING.lg }} />
               <Rail>
                 {d.related.map((r: any) => <DestinationRailCard key={r.id} item={r} />)}
               </Rail>
@@ -112,7 +114,7 @@ export default function DestinationDetail() {
       {/* Sticky CTA */}
       <View style={[styles.cta, { paddingBottom: insets.bottom + SPACING.sm }]}>
         <BlurView intensity={Platform.OS === "ios" ? 50 : 100} tint="light" style={StyleSheet.absoluteFill as any} />
-        <Button title="الحصول على الاتجاهات" icon="navigate" onPress={openDirections} testID="get-directions" />
+        <Button title={t("get_directions")} icon="navigate" onPress={openDirections} testID="get-directions" />
       </View>
     </View>
   );

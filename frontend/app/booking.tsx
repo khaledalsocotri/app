@@ -6,6 +6,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE, SHADOW } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { useFetch } from "@/src/hooks/useFetch";
 import { apiFetch } from "@/src/api/client";
 import { TextField } from "@/src/components/TextField";
@@ -20,6 +21,7 @@ export default function Booking() {
   const router = useRouter();
   const toast = useToast();
   const { user } = useAuth();
+  const { t, pick } = useI18n();
   const isTrip = type === "trip";
   const { data: item, loading } = useFetch<any>(`/${isTrip ? "trips" : "experiences"}/${id}`, [id]);
 
@@ -50,7 +52,7 @@ export default function Booking() {
         method: "POST",
         body: { booking_type: type, item_id: id, date, guests, full_name: name.trim(), phone: phone.trim(), notes },
       });
-      toast.show("تم إرسال طلب الحجز بنجاح ✓", "success");
+      toast.show(t("booking_success"), "success");
       router.back();
       setTimeout(() => router.push("/(tabs)/account"), 300);
     } catch (e: any) {
@@ -68,7 +70,7 @@ export default function Booking() {
         <Pressable onPress={() => router.back()} style={styles.backBtn} testID="booking-close">
           <Ionicons name="close" size={24} color={COLORS.onSurface} />
         </Pressable>
-        <Text style={styles.headerTitle}>تأكيد الحجز</Text>
+        <Text style={styles.headerTitle}>{t("confirm_booking")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -81,7 +83,7 @@ export default function Booking() {
         <View style={[styles.summary, SHADOW.soft]}>
           <Image source={item.cover_image} style={styles.summaryImg} contentFit="cover" />
           <View style={{ flex: 1 }}>
-            <Text style={styles.summaryTitle} numberOfLines={2}>{item.name_ar}</Text>
+            <Text style={styles.summaryTitle} numberOfLines={2}>{pick(item, "name")}</Text>
             <Text style={styles.summaryType}>{isTrip ? `رحلة · ${item.duration_days} أيام` : `تجربة · ${item.duration_ar}`}</Text>
             <Text style={styles.summaryPrice}>${item.price} / للشخص</Text>
           </View>
@@ -90,7 +92,7 @@ export default function Booking() {
         {/* Dates (trips) */}
         {isTrip && (item.dates_ar || []).length > 0 ? (
           <>
-            <Text style={styles.label}>اختر التاريخ</Text>
+            <Text style={styles.label}>{t("choose_date")}</Text>
             <View style={styles.dates}>
               {item.dates_ar.map((d: string) => {
                 const on = date === d;
@@ -106,7 +108,7 @@ export default function Booking() {
         ) : null}
 
         {/* Guests */}
-        <Text style={styles.label}>عدد الأشخاص</Text>
+        <Text style={styles.label}>{t("guests_count")}</Text>
         <View style={styles.stepper}>
           <Pressable style={styles.stepBtn} onPress={() => setGuests((g) => Math.max(1, g - 1))} testID="guests-minus">
             <Ionicons name="remove" size={22} color={COLORS.brand} />
@@ -118,23 +120,23 @@ export default function Booking() {
         </View>
 
         <View style={{ marginTop: SPACING.lg }}>
-          <TextField testID="booking-name" label="الاسم الكامل" icon="person-outline" placeholder="اسمك" value={name} onChangeText={setName} error={errors.name} />
-          <TextField testID="booking-phone" label="رقم الهاتف" icon="call-outline" placeholder="+967..." keyboardType="phone-pad" value={phone} onChangeText={setPhone} error={errors.phone} />
-          <TextField testID="booking-notes" label="ملاحظات (اختياري)" icon="chatbox-outline" placeholder="أي طلبات خاصة" value={notes} onChangeText={setNotes} multiline />
+          <TextField testID="booking-name" label={t("full_name")} icon="person-outline" placeholder="اسمك" value={name} onChangeText={setName} error={errors.name} />
+          <TextField testID="booking-phone" label={t("phone")} icon="call-outline" placeholder="+967..." keyboardType="phone-pad" value={phone} onChangeText={setPhone} error={errors.phone} />
+          <TextField testID="booking-notes" label={t("notes_optional")} icon="chatbox-outline" placeholder="أي طلبات خاصة" value={notes} onChangeText={setNotes} multiline />
         </View>
 
         <View style={styles.paymentNote}>
           <Ionicons name="information-circle-outline" size={18} color={COLORS.info} />
-          <Text style={styles.paymentTxt}>سيتم تسجيل طلبك وسنتواصل معك للتأكيد. الدفع غير مطلوب الآن.</Text>
+          <Text style={styles.paymentTxt}>{t("payment_note_booking")}</Text>
         </View>
       </KeyboardAwareScrollView>
 
       <View style={[styles.cta, { paddingBottom: insets.bottom + SPACING.sm }]}>
         <View style={styles.totalCol}>
-          <Text style={styles.totalLabel}>الإجمالي</Text>
+          <Text style={styles.totalLabel}>{t("total")}</Text>
           <Text style={styles.total}>${total}</Text>
         </View>
-        <Button title="تأكيد الحجز" icon="checkmark-circle" style={{ flex: 1 }} loading={submitting} onPress={submit} testID="confirm-booking" />
+        <Button title={t("confirm_booking")} icon="checkmark-circle" style={{ flex: 1 }} loading={submitting} onPress={submit} testID="confirm-booking" />
       </View>
     </View>
   );

@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, FONT, FSIZE } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { useFetch } from "@/src/hooks/useFetch";
 import { CategoryChips } from "@/src/components/CategoryChips";
 import { ProductCard } from "@/src/components/cards";
@@ -16,6 +17,7 @@ export default function Marketplace() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { t } = useI18n();
   const COL_W = (Math.min(width, 640) - SPACING.lg * 2 - COL_GAP) / 2;
   const [category, setCategory] = useState("all");
   const cart = useCart();
@@ -35,8 +37,8 @@ export default function Marketplace() {
             <Ionicons name="chevron-forward" size={24} color={COLORS.onSurface} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>التسويق المحلي</Text>
-            <Text style={styles.sub}>حرف ومنتجات وتجارب سقطرية أصيلة</Text>
+            <Text style={styles.title}>{t("local_market")}</Text>
+            <Text style={styles.sub}>{t("market_sub")}</Text>
           </View>
           <Pressable style={styles.cartBtn} onPress={() => router.push("/cart")} testID="marketplace-cart">
             <Ionicons name="cart-outline" size={24} color={COLORS.onSurface} />
@@ -61,7 +63,7 @@ export default function Marketplace() {
           renderItem={({ item }) => <ProductCard item={item} width={COL_W} />}
           contentContainerStyle={{ padding: SPACING.lg, paddingBottom: SPACING.xxl }}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<EmptyState icon="basket-outline" title="لا توجد منتجات" subtitle="جرّب فئة أخرى" />}
+          ListEmptyComponent={<EmptyState icon="basket-outline" title={t("no_products")} subtitle={t("try_other_cat")} />}
         />
       )}
     </View>

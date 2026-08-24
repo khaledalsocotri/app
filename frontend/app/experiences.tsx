@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, FONT, FSIZE } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { useFetch } from "@/src/hooks/useFetch";
 import { ExperienceCard } from "@/src/components/cards";
 import { LoadingState, ErrorState, EmptyState } from "@/src/components/States";
@@ -11,6 +12,7 @@ import { LoadingState, ErrorState, EmptyState } from "@/src/components/States";
 export default function Experiences() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useI18n();
   const { data, loading, error, reload } = useFetch<any[]>("/experiences");
 
   return (
@@ -20,8 +22,8 @@ export default function Experiences() {
           <Ionicons name="chevron-forward" size={24} color={COLORS.onSurface} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>التجارب المحلية</Text>
-          <Text style={styles.sub}>عش الثقافة السقطرية الأصيلة</Text>
+          <Text style={styles.title}>{t("experiences_title")}</Text>
+          <Text style={styles.sub}>{t("experiences_sub")}</Text>
         </View>
       </View>
 
@@ -38,7 +40,7 @@ export default function Experiences() {
           renderItem={({ item }) => <View style={{ width: "47%" }}><ExperienceCard item={item} /></View>}
           contentContainerStyle={{ padding: SPACING.lg, paddingBottom: SPACING.xxl }}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<EmptyState icon="sparkles-outline" title="لا توجد تجارب" />}
+          ListEmptyComponent={<EmptyState icon="sparkles-outline" title={t("no_experiences")} />}
         />
       )}
     </View>

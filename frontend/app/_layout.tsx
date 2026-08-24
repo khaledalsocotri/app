@@ -10,6 +10,7 @@ import { StatusBar } from "expo-status-bar";
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { useAppFonts } from "@/src/hooks/use-app-fonts";
 import { AuthProvider } from "@/src/context/AuthContext";
+import { LanguageProvider } from "@/src/context/LanguageContext";
 import { FavoritesProvider } from "@/src/context/FavoritesContext";
 import { CartProvider } from "@/src/context/CartContext";
 import { ToastProvider } from "@/src/components/Toast";
@@ -38,10 +39,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <SafeAreaProvider>
-          <AuthProvider>
-            <FavoritesProvider>
-              <CartProvider>
-                <ToastProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <FavoritesProvider>
+                <CartProvider>
+                  <ToastProvider>
                   <StatusBar style="dark" />
                   <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#FFFFFF" } }}>
                     <Stack.Screen name="index" />
@@ -56,10 +58,11 @@ export default function RootLayout() {
                     <Stack.Screen name="search" options={{ animation: "fade" }} />
                     <Stack.Screen name="marketplace" options={{ animation: "slide_from_right" }} />
                   </Stack>
-                </ToastProvider>
-              </CartProvider>
-            </FavoritesProvider>
-          </AuthProvider>
+                  </ToastProvider>
+                </CartProvider>
+              </FavoritesProvider>
+            </AuthProvider>
+          </LanguageProvider>
         </SafeAreaProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>

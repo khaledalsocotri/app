@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SPACING, FONT, FSIZE } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 
 export function Section({
   title,
@@ -14,6 +15,7 @@ export function Section({
   onSeeAll?: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
@@ -23,7 +25,7 @@ export function Section({
         </View>
         {onSeeAll ? (
           <Pressable style={styles.seeAll} onPress={onSeeAll} testID={`see-all-${title}`}>
-            <Text style={styles.seeAllTxt}>عرض الكل</Text>
+            <Text style={styles.seeAllTxt}>{t("see_all")}</Text>
             <Ionicons name="chevron-back" size={16} color={COLORS.brandPrimary} />
           </Pressable>
         ) : null}

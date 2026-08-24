@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE, SHADOW } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { FavoriteButton } from "./FavoriteButton";
 import { Stars } from "./Stars";
 
@@ -13,6 +14,7 @@ const BLUR = "L6Pj0^jE.AyE_3t7t7R**0o#DgR4";
 // ---------- Destination (full-width hero card) ----------
 export function DestinationCard({ item }: { item: any }) {
   const router = useRouter();
+  const { pick } = useI18n();
   return (
     <Pressable
       testID={`destination-card-${item.id}`}
@@ -27,9 +29,9 @@ export function DestinationCard({ item }: { item: any }) {
       <View style={styles.heroBody}>
         <View style={styles.locRow}>
           <Ionicons name="location" size={13} color="#fff" />
-          <Text style={styles.locTxt}>{item.location_ar}</Text>
+          <Text style={styles.locTxt}>{pick(item, "location")}</Text>
         </View>
-        <Text style={styles.heroTitle} numberOfLines={1}>{item.name_ar}</Text>
+        <Text style={styles.heroTitle} numberOfLines={1}>{pick(item, "name")}</Text>
         <View style={styles.heroMeta}>
           <Stars rating={item.rating} size={13} />
           <Text style={styles.heroMetaTxt}>· {item.name_en}</Text>
@@ -42,6 +44,7 @@ export function DestinationCard({ item }: { item: any }) {
 // ---------- Destination (rail card) ----------
 export function DestinationRailCard({ item }: { item: any }) {
   const router = useRouter();
+  const { pick } = useI18n();
   return (
     <Pressable
       testID={`destination-rail-${item.id}`}
@@ -54,10 +57,10 @@ export function DestinationRailCard({ item }: { item: any }) {
           <FavoriteButton type="destination" id={item.id} size={16} />
         </View>
       </View>
-      <Text style={styles.railTitle} numberOfLines={1}>{item.name_ar}</Text>
+      <Text style={styles.railTitle} numberOfLines={1}>{pick(item, "name")}</Text>
       <View style={styles.railMeta}>
         <Ionicons name="location-outline" size={12} color={COLORS.onSurfaceSecondary} />
-        <Text style={styles.railSub} numberOfLines={1}>{item.location_ar}</Text>
+        <Text style={styles.railSub} numberOfLines={1}>{pick(item, "location")}</Text>
         <View style={{ flex: 1 }} />
         <Stars rating={item.rating} size={12} />
       </View>
@@ -68,6 +71,7 @@ export function DestinationRailCard({ item }: { item: any }) {
 // ---------- Experience card (rail) ----------
 export function ExperienceCard({ item }: { item: any }) {
   const router = useRouter();
+  const { pick } = useI18n();
   return (
     <Pressable testID={`experience-card-${item.id}`} style={styles.rail} onPress={() => router.push(`/experience/${item.id}`)}>
       <View style={styles.railImgWrap}>
@@ -79,10 +83,10 @@ export function ExperienceCard({ item }: { item: any }) {
           <Text style={styles.priceTagTxt}>${item.price}</Text>
         </View>
       </View>
-      <Text style={styles.railTitle} numberOfLines={1}>{item.name_ar}</Text>
+      <Text style={styles.railTitle} numberOfLines={1}>{pick(item, "name")}</Text>
       <View style={styles.railMeta}>
         <Ionicons name="time-outline" size={12} color={COLORS.onSurfaceSecondary} />
-        <Text style={styles.railSub} numberOfLines={1}>{item.duration_ar}</Text>
+        <Text style={styles.railSub} numberOfLines={1}>{pick(item, "duration")}</Text>
         <View style={{ flex: 1 }} />
         <Stars rating={item.rating} size={12} />
       </View>
@@ -93,6 +97,7 @@ export function ExperienceCard({ item }: { item: any }) {
 // ---------- Product card (grid 2-col) ----------
 export function ProductCard({ item, width }: { item: any; width: number }) {
   const router = useRouter();
+  const { pick } = useI18n();
   return (
     <Pressable
       testID={`product-card-${item.id}`}
@@ -105,10 +110,10 @@ export function ProductCard({ item, width }: { item: any; width: number }) {
           <FavoriteButton type="product" id={item.id} size={16} />
         </View>
       </View>
-      <Text style={styles.railTitle} numberOfLines={2}>{item.name_ar}</Text>
+      <Text style={styles.railTitle} numberOfLines={2}>{pick(item, "name")}</Text>
       <View style={styles.sellerRow}>
         <Ionicons name="storefront-outline" size={12} color={COLORS.onSurfaceSecondary} />
-        <Text style={styles.railSub} numberOfLines={1}>{item.seller_ar}</Text>
+        <Text style={styles.railSub} numberOfLines={1}>{pick(item, "seller")}</Text>
       </View>
       <Text style={styles.price}>${item.price}</Text>
     </Pressable>
@@ -118,6 +123,7 @@ export function ProductCard({ item, width }: { item: any; width: number }) {
 // ---------- Trip card (full-width) ----------
 export function TripCard({ item }: { item: any }) {
   const router = useRouter();
+  const { pick } = useI18n();
   return (
     <Pressable testID={`trip-card-${item.id}`} style={[styles.tripCard, SHADOW.card]} onPress={() => router.push(`/trip/${item.id}`)}>
       <Image source={item.cover_image} style={styles.tripImg} placeholder={BLUR} contentFit="cover" transition={250} />
@@ -130,7 +136,7 @@ export function TripCard({ item }: { item: any }) {
         <Text style={styles.tripBadgeTxt}>{item.duration_days} أيام</Text>
       </View>
       <View style={styles.tripBody}>
-        <Text style={styles.heroTitle} numberOfLines={1}>{item.name_ar}</Text>
+        <Text style={styles.heroTitle} numberOfLines={1}>{pick(item, "name")}</Text>
         <View style={styles.tripMetaRow}>
           <Stars rating={item.rating} size={13} />
           <Text style={styles.heroMetaTxt}>· {item.available_seats} مقاعد متاحة</Text>
@@ -144,6 +150,7 @@ export function TripCard({ item }: { item: any }) {
 
 // ---------- Offer / Event small card ----------
 export function PromoCard({ item, kind }: { item: any; kind: "offer" | "event" }) {
+  const { pick } = useI18n();
   return (
     <View style={styles.promo}>
       <Image source={item.cover_image} style={styles.promoImg} placeholder={BLUR} contentFit="cover" transition={250} />
@@ -154,7 +161,7 @@ export function PromoCard({ item, kind }: { item: any; kind: "offer" | "event" }
         </View>
       ) : null}
       <View style={styles.promoBody}>
-        <Text style={styles.promoTitle} numberOfLines={2}>{item.name_ar}</Text>
+        <Text style={styles.promoTitle} numberOfLines={2}>{pick(item, "name")}</Text>
         <Text style={styles.promoSub} numberOfLines={1}>
           {kind === "event" ? item.date_ar : item.valid_until_ar}
         </Text>

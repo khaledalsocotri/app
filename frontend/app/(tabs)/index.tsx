@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE, SHADOW } from "@/src/theme/theme";
 import { useFetch } from "@/src/hooks/useFetch";
 import { useAuth } from "@/src/context/AuthContext";
+import { useI18n } from "@/src/context/LanguageContext";
 import { Section, Rail } from "@/src/components/Section";
 import { DestinationRailCard, ExperienceCard, ProductCard, TripCard, PromoCard } from "@/src/components/cards";
 import { FavoriteButton } from "@/src/components/FavoriteButton";
@@ -17,16 +18,17 @@ import { LoadingState, ErrorState } from "@/src/components/States";
 const TABBAR = 92;
 
 const QUICK = [
-  { key: "marketplace", label: "التسويق", icon: "storefront", color: "#C39158", route: "/marketplace" },
-  { key: "experiences", label: "التجارب", icon: "sparkles", color: "#0F6B76", route: "/experiences" },
-  { key: "map", label: "الخريطة", icon: "map", color: "#158C9B", route: "/(tabs)/map" },
-  { key: "trips", label: "الرحلات", icon: "airplane", color: "#4A6E8C", route: "/(tabs)/trips" },
+  { key: "marketplace", tkey: "q_marketplace", icon: "storefront", color: "#C39158", route: "/marketplace" },
+  { key: "experiences", tkey: "q_experiences", icon: "sparkles", color: "#0F6B76", route: "/experiences" },
+  { key: "map", tkey: "q_map", icon: "map", color: "#158C9B", route: "/(tabs)/map" },
+  { key: "trips", tkey: "q_trips", icon: "airplane", color: "#4A6E8C", route: "/(tabs)/trips" },
 ];
 
 export default function Discover() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const { t, pick } = useI18n();
   const { width } = useWindowDimensions();
   const HERO_W = Math.min(width, 640) - SPACING.lg * 2;
   const { data, loading, error, reload } = useFetch<any>("/discover");
@@ -40,8 +42,8 @@ export default function Discover() {
         {/* Header */}
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.hi}>مرحباً {user?.name?.split(" ")[0] || "بك"} 👋</Text>
-            <Text style={styles.headTitle}>اكتشف سقطرى</Text>
+            <Text style={styles.hi}>{t("hello")} {user?.name?.split(" ")[0] || ""} 👋</Text>
+            <Text style={styles.headTitle}>{t("discover_socotra")}</Text>
           </View>
           <Pressable style={styles.bell} onPress={() => router.push("/(tabs)/account")} testID="header-avatar">
             <Ionicons name="notifications-outline" size={22} color={COLORS.onSurface} />
@@ -51,7 +53,7 @@ export default function Discover() {
         {/* Search */}
         <Pressable style={styles.search} onPress={() => router.push("/search")} testID="discover-search">
           <Ionicons name="search" size={20} color={COLORS.onSurfaceSecondary} />
-          <Text style={styles.searchTxt}>ابحث عن وجهة، تجربة، رحلة...</Text>
+          <Text style={styles.searchTxt}>{t("search_placeholder")}</Text>
         </Pressable>
 
         {loading ? (
@@ -82,14 +84,14 @@ export default function Discover() {
                   <View style={styles.heroFav}><FavoriteButton type="destination" id={item.id} /></View>
                   <View style={styles.featBadge}>
                     <Ionicons name="star" size={12} color="#fff" />
-                    <Text style={styles.featBadgeTxt}>مميّز</Text>
+                    <Text style={styles.featBadgeTxt}>{t("featured")}</Text>
                   </View>
                   <View style={styles.heroBody}>
                     <View style={styles.locRow}>
                       <Ionicons name="location" size={13} color="#fff" />
-                      <Text style={styles.locTxt}>{item.location_ar}</Text>
+                      <Text style={styles.locTxt}>{pick(item, "location")}</Text>
                     </View>
-                    <Text style={styles.heroTitle} numberOfLines={1}>{item.name_ar}</Text>
+                    <Text style={styles.heroTitle} numberOfLines={1}>{pick(item, "name")}</Text>
                     <View style={styles.heroMeta}>
                       <Stars rating={item.rating} size={13} />
                       <Text style={styles.heroMetaTxt}>· {item.name_en}</Text>
@@ -106,24 +108,24 @@ export default function Discover() {
                   <View style={[styles.quickIcon, { backgroundColor: q.color }]}>
                     <Ionicons name={q.icon as any} size={22} color="#fff" />
                   </View>
-                  <Text style={styles.quickLabel}>{q.label}</Text>
+                  <Text style={styles.quickLabel}>{t(q.tkey)}</Text>
                 </Pressable>
               ))}
             </View>
 
-            <Section title="الأماكن الشهيرة" subtitle="الأكثر زيارة في الجزيرة" onSeeAll={() => router.push("/(tabs)/map")}>
+            <Section title={t("sec_popular")} subtitle={t("sec_popular_sub")} onSeeAll={() => router.push("/(tabs)/map")}>
               <Rail>
                 {(data.popular_places || []).map((it: any) => <DestinationRailCard key={it.id} item={it} />)}
               </Rail>
             </Section>
 
-            <Section title="تجارب محلية" subtitle="عش الثقافة السقطرية" onSeeAll={() => router.push("/experiences")}>
+            <Section title={t("sec_local_exp")} subtitle={t("sec_local_exp_sub")} onSeeAll={() => router.push("/experiences")}>
               <Rail>
                 {(data.experiences || []).map((it: any) => <ExperienceCard key={it.id} item={it} />)}
               </Rail>
             </Section>
 
-            <Section title="منتجات محلية" subtitle="حرف وأطعمة أصيلة" onSeeAll={() => router.push("/marketplace")}>
+            <Section title={t("sec_local_prod")} subtitle={t("sec_local_prod_sub")} onSeeAll={() => router.push("/marketplace")}>
               <Rail>
                 {(data.products || []).map((it: any) => (
                   <View key={it.id} style={{ width: 160 }}>
@@ -134,7 +136,7 @@ export default function Discover() {
             </Section>
 
             {(data.offers || []).length > 0 && (
-              <Section title="عروض خاصة" subtitle="لفترة محدودة">
+              <Section title={t("sec_offers")} subtitle={t("sec_offers_sub")}>
                 <Rail>
                   {(data.offers || []).map((it: any) => <PromoCard key={it.id} item={it} kind="offer" />)}
                 </Rail>
@@ -142,14 +144,14 @@ export default function Discover() {
             )}
 
             {(data.events || []).length > 0 && (
-              <Section title="فعاليات قادمة">
+              <Section title={t("sec_events")}>
                 <Rail>
                   {(data.events || []).map((it: any) => <PromoCard key={it.id} item={it} kind="event" />)}
                 </Rail>
               </Section>
             )}
 
-            <Section title="رحلات سياحية" subtitle="باقات مصممة لك" onSeeAll={() => router.push("/(tabs)/trips")}>
+            <Section title={t("sec_trips")} subtitle={t("sec_trips_sub")} onSeeAll={() => router.push("/(tabs)/trips")}>
               <View style={styles.trips}>
                 {(data.trips || []).slice(0, 2).map((it: any) => <TripCard key={it.id} item={it} />)}
               </View>

@@ -3,22 +3,25 @@ import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from "r
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { apiFetch } from "@/src/api/client";
 import { useAuth } from "@/src/context/AuthContext";
 import { DestinationRailCard, ExperienceCard, ProductCard, TripCard } from "@/src/components/cards";
 import { LoadingState, EmptyState } from "@/src/components/States";
 
 const TABBAR = 92;
-const TABS = [
-  { key: "destinations", label: "الوجهات" },
-  { key: "experiences", label: "التجارب" },
-  { key: "products", label: "المنتجات" },
-  { key: "trips", label: "الرحلات" },
+const TAB_KEYS = [
+  { key: "destinations", t: "fav_destinations" },
+  { key: "experiences", t: "fav_experiences" },
+  { key: "products", t: "fav_products" },
+  { key: "trips", t: "fav_trips" },
 ];
 
 export default function Favorites() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { t } = useI18n();
+  const TABS = TAB_KEYS.map((x) => ({ key: x.key, label: t(x.t) }));
   const [tab, setTab] = useState("destinations");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +74,7 @@ export default function Favorites() {
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <Text style={styles.title}>المفضلة</Text>
+        <Text style={styles.title}>{t("favorites_title")}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
           {TABS.map((t) => {
             const on = tab === t.key;
@@ -88,7 +91,7 @@ export default function Favorites() {
       {loading ? (
         <LoadingState />
       ) : items.length === 0 ? (
-        <EmptyState icon="heart-outline" title="لا توجد عناصر مفضلة" subtitle="أضف وجهات وتجارب ومنتجات تحبها لتظهر هنا" />
+        <EmptyState icon="heart-outline" title={t("no_favorites")} subtitle={t("no_favorites_sub")} />
       ) : (
         <ScrollView
           contentContainerStyle={{ padding: SPACING.lg, paddingBottom: TABBAR + SPACING.xl }}

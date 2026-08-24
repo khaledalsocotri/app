@@ -10,6 +10,7 @@ import { apiFetch } from "@/src/api/client";
 import { uploadImageAsync } from "@/src/api/upload";
 import { useToast } from "@/src/components/Toast";
 import { useAuth } from "@/src/context/AuthContext";
+import { useI18n } from "@/src/context/LanguageContext";
 import { Button } from "@/src/components/Button";
 
 type ItemType = "destination" | "experience" | "trip";
@@ -38,6 +39,7 @@ function StarPicker({ value, onChange, size = 34 }: { value: number; onChange: (
 export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemId: string }) {
   const toast = useToast();
   const { user } = useAuth();
+  const { t } = useI18n();
   const { data: reviews, reload } = useFetch<any[]>(`/reviews?item_type=${itemType}&item_id=${itemId}`, [itemId]);
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
@@ -134,11 +136,11 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
       <View style={styles.headerRow}>
         <View style={styles.titleRow}>
           <Ionicons name="chatbubble-ellipses-outline" size={18} color={COLORS.brand} />
-          <Text style={styles.title}>التقييمات ({list.length})</Text>
+          <Text style={styles.title}>{t("reviews")} ({list.length})</Text>
         </View>
         <Pressable style={styles.addBtn} onPress={() => setOpen(true)} testID="add-review-button">
           <Ionicons name="create-outline" size={16} color={COLORS.onBrandPrimary} />
-          <Text style={styles.addTxt}>أضف تقييمك</Text>
+          <Text style={styles.addTxt}>{t("add_review")}</Text>
         </Pressable>
       </View>
 
@@ -152,7 +154,7 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
                   <Ionicons key={n} name={n <= Math.round(avg) ? "star" : "star-outline"} size={16} color={COLORS.star} />
                 ))}
               </View>
-              <Text style={styles.avgSub}>بناءً على {list.length} تقييم</Text>
+              <Text style={styles.avgSub}>{t("based_on")} {list.length} {t("review_word")}</Text>
             </View>
           </View>
 
@@ -167,7 +169,7 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
                       {r.verified ? (
                         <View style={styles.verified} testID={`verified-${r.id}`}>
                           <Ionicons name="checkmark-circle" size={12} color={COLORS.success} />
-                          <Text style={styles.verifiedTxt}>زيارة مؤكدة</Text>
+                          <Text style={styles.verifiedTxt}>{t("verified_visit")}</Text>
                         </View>
                       ) : null}
                     </View>
@@ -194,7 +196,7 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
                 <View style={styles.replyBox} testID={`reply-${r.id}`}>
                   <View style={styles.replyHead}>
                     <Ionicons name="chatbubbles" size={13} color={COLORS.brand} />
-                    <Text style={styles.replyBy}>رد {r.reply_by || "المضيف"}</Text>
+                    <Text style={styles.replyBy}>{t("host_reply")}{r.reply_by ? " · " + r.reply_by : ""}</Text>
                   </View>
                   <Text style={styles.replyTxt}>{r.reply}</Text>
                 </View>
@@ -212,14 +214,14 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
                       textAlign="right"
                     />
                     <View style={styles.replyActions}>
-                      <Button title="نشر" icon="send" style={{ flex: 1, height: 42 }} loading={replySaving} onPress={() => sendReply(r.id)} testID={`reply-send-${r.id}`} />
-                      <Button title="إلغاء" variant="ghost" style={{ height: 42 }} onPress={() => { setReplyingId(null); setReplyText(""); }} testID={`reply-cancel-${r.id}`} />
+                      <Button title={t("send_review").length ? "نشر" : "نشر"} icon="send" style={{ flex: 1, height: 42 }} loading={replySaving} onPress={() => sendReply(r.id)} testID={`reply-send-${r.id}`} />
+                      <Button title={t("cancel")} variant="ghost" style={{ height: 42 }} onPress={() => { setReplyingId(null); setReplyText(""); }} testID={`reply-cancel-${r.id}`} />
                     </View>
                   </View>
                 ) : (
                   <Pressable style={styles.replyBtn} onPress={() => { setReplyingId(r.id); setReplyText(""); }} testID={`reply-open-${r.id}`}>
                     <Ionicons name="arrow-undo-outline" size={15} color={COLORS.brand} />
-                    <Text style={styles.replyBtnTxt}>الرد كمضيف</Text>
+                    <Text style={styles.replyBtnTxt}>{t("reply_as_host")}</Text>
                   </Pressable>
                 )
               ) : null}
@@ -229,7 +231,7 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
       ) : (
         <View style={styles.empty}>
           <Ionicons name="star-outline" size={28} color={COLORS.brandPrimary} />
-          <Text style={styles.emptyTxt}>كن أول من يشارك تجربته</Text>
+          <Text style={styles.emptyTxt}>{t("be_first_review")}</Text>
         </View>
       )}
 
@@ -239,13 +241,13 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.sheetWrap}>
           <View style={[styles.sheet, SHADOW.card]}>
             <View style={styles.grabber} />
-            <Text style={styles.sheetTitle}>ما رأيك في هذا المكان؟</Text>
+            <Text style={styles.sheetTitle}>{t("review_prompt")}</Text>
             <StarPicker value={rating} onChange={setRating} />
             <View style={styles.commentBox}>
               <TextInput
                 testID="review-comment"
                 style={styles.commentInput}
-                placeholder="اكتب تجربتك (اختياري)"
+                placeholder={t("write_experience")}
                 placeholderTextColor={COLORS.onSurfaceSecondary}
                 value={comment}
                 onChangeText={setComment}
@@ -258,7 +260,7 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: "100%" }} contentContainerStyle={styles.pickRow}>
               <Pressable style={styles.addPhoto} onPress={pickPhoto} disabled={uploading} testID="add-photo-button">
                 <Ionicons name={uploading ? "hourglass-outline" : "camera-outline"} size={22} color={COLORS.brand} />
-                <Text style={styles.addPhotoTxt}>{uploading ? "جارٍ الرفع" : "صورة"}</Text>
+                <Text style={styles.addPhotoTxt}>{uploading ? t("uploading") : t("photo")}</Text>
               </Pressable>
               {photos.map((ph, i) => (
                 <View key={i} style={styles.thumbWrap}>
@@ -270,7 +272,7 @@ export function ReviewsSection({ itemType, itemId }: { itemType: ItemType; itemI
               ))}
             </ScrollView>
 
-            <Button title="إرسال التقييم" icon="send" loading={submitting} onPress={submit} testID="submit-review" />
+            <Button title={t("send_review")} icon="send" loading={submitting} onPress={submit} testID="submit-review" />
             <Pressable style={styles.cancel} onPress={() => setOpen(false)} testID="cancel-review">
               <Text style={styles.cancelTxt}>إلغاء</Text>
             </Pressable>

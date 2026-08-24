@@ -7,6 +7,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Redirect, useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { TextField } from "@/src/components/TextField";
 import { Button } from "@/src/components/Button";
 import { useAuth } from "@/src/context/AuthContext";
@@ -20,6 +21,7 @@ export default function Login() {
   const router = useRouter();
   const { user, login, loginWithGoogle } = useAuth();
   const toast = useToast();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -77,16 +79,16 @@ export default function Login() {
             <Ionicons name="leaf" size={26} color="#fff" />
           </View>
           <Text style={styles.brand}>سُقطرى إكسبلورر</Text>
-          <Text style={styles.tagline}>اكتشف جزيرة سقطرى — جوهرة المحيط الهندي</Text>
+          <Text style={styles.tagline}>{t("tagline")}</Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.title}>تسجيل الدخول</Text>
-          <Text style={styles.subtitle}>مرحباً بعودتك، سجّل الدخول للمتابعة</Text>
+          <Text style={styles.title}>{t("login")}</Text>
+          <Text style={styles.subtitle}>{t("welcome_back")}</Text>
 
           <TextField
             testID="login-email"
-            label="البريد الإلكتروني"
+            label={t("email")}
             icon="mail-outline"
             placeholder="example@email.com"
             autoCapitalize="none"
@@ -97,7 +99,7 @@ export default function Login() {
           />
           <TextField
             testID="login-password"
-            label="كلمة المرور"
+            label={t("password")}
             icon="lock-closed-outline"
             placeholder="••••••••"
             secure
@@ -106,22 +108,22 @@ export default function Login() {
             error={errors.password}
           />
 
-          <Button testID="login-submit" title="دخول" onPress={onLogin} loading={loading} />
+          <Button testID="login-submit" title={t("login_cta")} onPress={onLogin} loading={loading} />
 
           <View style={styles.divider}>
             <View style={styles.line} />
-            <Text style={styles.or}>أو</Text>
+            <Text style={styles.or}>{t("or")}</Text>
             <View style={styles.line} />
           </View>
 
           <Pressable testID="login-google" style={styles.google} onPress={onGoogle} disabled={gLoading}>
             <Ionicons name="logo-google" size={20} color="#DB4437" />
-            <Text style={styles.googleTxt}>{gLoading ? "جارٍ التحويل..." : "المتابعة عبر Google"}</Text>
+            <Text style={styles.googleTxt}>{gLoading ? "..." : t("continue_google")}</Text>
           </Pressable>
 
           <Pressable style={styles.footer} onPress={() => router.push("/(auth)/register")} testID="go-register">
             <Text style={styles.footerTxt}>
-              ليس لديك حساب؟ <Text style={styles.footerLink}>إنشاء حساب</Text>
+              {t("no_account")} <Text style={styles.footerLink}>{t("create_account")}</Text>
             </Text>
           </Pressable>
         </View>

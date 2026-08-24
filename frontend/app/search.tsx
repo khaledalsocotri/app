@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { apiFetch } from "@/src/api/client";
 import { DestinationRailCard, ExperienceCard, ProductCard, TripCard } from "@/src/components/cards";
 import { Rail, Section } from "@/src/components/Section";
@@ -12,6 +13,7 @@ import { EmptyState } from "@/src/components/States";
 export default function Search() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useI18n();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -50,7 +52,7 @@ export default function Search() {
           <TextInput
             testID="search-input"
             style={styles.input}
-            placeholder="ابحث عن وجهة، رحلة، تجربة، منتج..."
+            placeholder={t("search_global_placeholder")}
             placeholderTextColor={COLORS.onSurfaceSecondary}
             value={q}
             onChangeText={setQ}
@@ -69,25 +71,25 @@ export default function Search() {
         <View style={{ paddingTop: SPACING.xxxl }}><ActivityIndicator size="large" color={COLORS.brandPrimary} /></View>
       ) : !results ? (
         <View style={{ flex: 1, paddingTop: SPACING.xxl }}>
-          <EmptyState icon="search-outline" title="ابحث عن أي شيء" subtitle="وجهات، رحلات، تجارب ومنتجات سقطرى" />
+          <EmptyState icon="search-outline" title={t("search_anything")} subtitle={t("search_anything_sub")} />
         </View>
       ) : total === 0 ? (
         <View style={{ flex: 1, paddingTop: SPACING.xxl }}>
-          <EmptyState icon="sad-outline" title="لا توجد نتائج" subtitle={`لم نجد شيئاً لـ "${q}"`} />
+          <EmptyState icon="sad-outline" title={t("no_search_results")} subtitle={`"${q}"`} />
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: SPACING.xxl }} keyboardShouldPersistTaps="handled">
           {results.destinations.length > 0 && (
-            <Section title="الوجهات"><Rail>{results.destinations.map((i: any) => <DestinationRailCard key={i.id} item={i} />)}</Rail></Section>
+            <Section title={t("fav_destinations")}><Rail>{results.destinations.map((i: any) => <DestinationRailCard key={i.id} item={i} />)}</Rail></Section>
           )}
           {results.experiences.length > 0 && (
-            <Section title="التجارب"><Rail>{results.experiences.map((i: any) => <ExperienceCard key={i.id} item={i} />)}</Rail></Section>
+            <Section title={t("fav_experiences")}><Rail>{results.experiences.map((i: any) => <ExperienceCard key={i.id} item={i} />)}</Rail></Section>
           )}
           {results.products.length > 0 && (
-            <Section title="المنتجات"><Rail>{results.products.map((i: any) => <View key={i.id} style={{ width: 160 }}><ProductCard item={i} width={160} /></View>)}</Rail></Section>
+            <Section title={t("fav_products")}><Rail>{results.products.map((i: any) => <View key={i.id} style={{ width: 160 }}><ProductCard item={i} width={160} /></View>)}</Rail></Section>
           )}
           {results.trips.length > 0 && (
-            <Section title="الرحلات"><View style={{ paddingHorizontal: SPACING.lg, gap: SPACING.lg }}>{results.trips.map((i: any) => <TripCard key={i.id} item={i} />)}</View></Section>
+            <Section title={t("fav_trips")}><View style={{ paddingHorizontal: SPACING.lg, gap: SPACING.lg }}>{results.trips.map((i: any) => <TripCard key={i.id} item={i} />)}</View></Section>
           )}
         </ScrollView>
       )}

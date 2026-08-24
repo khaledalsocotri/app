@@ -5,6 +5,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Redirect, useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { TextField } from "@/src/components/TextField";
 import { Button } from "@/src/components/Button";
 import { useAuth } from "@/src/context/AuthContext";
@@ -15,6 +16,7 @@ export default function Register() {
   const router = useRouter();
   const { user, register } = useAuth();
   const toast = useToast();
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +54,7 @@ export default function Register() {
         <Pressable onPress={() => router.back()} hitSlop={10} testID="register-back" style={styles.backBtn}>
           <Ionicons name="chevron-forward" size={24} color={COLORS.onSurface} />
         </Pressable>
-        <Text style={styles.headerTitle}>إنشاء حساب</Text>
+        <Text style={styles.headerTitle}>{t("create_account")}</Text>
         <View style={{ width: 40 }} />
       </View>
       <KeyboardAwareScrollView
@@ -62,16 +64,16 @@ export default function Register() {
       >
         <Text style={styles.lead}>انضم إلينا واكتشف كنوز سقطرى الطبيعية والثقافية</Text>
 
-        <TextField testID="register-name" label="الاسم الكامل" icon="person-outline" placeholder="اسمك" value={name} onChangeText={setName} error={errors.name} />
-        <TextField testID="register-email" label="البريد الإلكتروني" icon="mail-outline" placeholder="example@email.com" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} error={errors.email} />
-        <TextField testID="register-password" label="كلمة المرور" icon="lock-closed-outline" placeholder="••••••••" secure value={password} onChangeText={setPassword} error={errors.password} />
+        <TextField testID="register-name" label={t("full_name")} icon="person-outline" placeholder="اسمك" value={name} onChangeText={setName} error={errors.name} />
+        <TextField testID="register-email" label={t("email")} icon="mail-outline" placeholder="example@email.com" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} error={errors.email} />
+        <TextField testID="register-password" label={t("password")} icon="lock-closed-outline" placeholder="••••••••" secure value={password} onChangeText={setPassword} error={errors.password} />
         <TextField testID="register-confirm" label="تأكيد كلمة المرور" icon="lock-closed-outline" placeholder="••••••••" secure value={confirm} onChangeText={setConfirm} error={errors.confirm} />
 
-        <Button testID="register-submit" title="إنشاء الحساب" onPress={onRegister} loading={loading} style={{ marginTop: SPACING.sm }} />
+        <Button testID="register-submit" title={t("create_account")} onPress={onRegister} loading={loading} style={{ marginTop: SPACING.sm }} />
 
         <Pressable style={styles.footer} onPress={() => router.replace("/(auth)/login")} testID="go-login">
           <Text style={styles.footerTxt}>
-            لديك حساب بالفعل؟ <Text style={styles.footerLink}>تسجيل الدخول</Text>
+            {t("have_account")} <Text style={styles.footerLink}>{t("login")}</Text>
           </Text>
         </Pressable>
       </KeyboardAwareScrollView>

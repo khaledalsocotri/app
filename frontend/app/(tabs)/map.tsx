@@ -6,6 +6,7 @@ import * as Location from "expo-location";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE, SHADOW } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 import { useFetch } from "@/src/hooks/useFetch";
 import { CategoryChips } from "@/src/components/CategoryChips";
 import { FavoriteButton } from "@/src/components/FavoriteButton";
@@ -18,6 +19,7 @@ const TABBAR = 92;
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t, pick } = useI18n();
   const [category, setCategory] = useState("all");
   const [selected, setSelected] = useState<any>(null);
   const [granted, setGranted] = useState(false);
@@ -67,7 +69,7 @@ export default function MapScreen() {
       <View style={[styles.topWrap, { paddingTop: insets.top + SPACING.sm }]} pointerEvents="box-none">
         <Pressable style={[styles.search, SHADOW.card]} onPress={() => router.push("/search")} testID="map-search">
           <Ionicons name="search" size={20} color={COLORS.onSurfaceSecondary} />
-          <Text style={styles.searchTxt}>ابحث في الخريطة</Text>
+          <Text style={styles.searchTxt}>{t("search_in_map")}</Text>
           <View style={styles.mapPin}><Ionicons name="map" size={16} color={COLORS.brand} /></View>
         </Pressable>
         <CategoryChips chips={chips} active={category} onChange={setCategory} />
@@ -86,19 +88,19 @@ export default function MapScreen() {
           <Pressable style={styles.previewMain} onPress={() => router.push(`/destination/${selected.id}`)}>
             <Image source={selected.cover_image} style={styles.previewImg} contentFit="cover" />
             <View style={styles.previewBody}>
-              <Text style={styles.previewTitle} numberOfLines={1}>{selected.name_ar}</Text>
+              <Text style={styles.previewTitle} numberOfLines={1}>{pick(selected, "name")}</Text>
               <View style={styles.previewMeta}>
                 <Ionicons name="location-outline" size={13} color={COLORS.onSurfaceSecondary} />
-                <Text style={styles.previewLoc} numberOfLines={1}>{selected.location_ar}</Text>
+                <Text style={styles.previewLoc} numberOfLines={1}>{pick(selected, "location")}</Text>
                 <Stars rating={selected.rating} size={12} />
               </View>
-              <Text style={styles.previewDesc} numberOfLines={2}>{selected.description_ar}</Text>
+              <Text style={styles.previewDesc} numberOfLines={2}>{pick(selected, "description")}</Text>
             </View>
             <FavoriteButton type="destination" id={selected.id} variant="plain" />
           </Pressable>
           <View style={styles.previewActions}>
-            <Button title="التفاصيل" variant="ghost" icon="information-circle-outline" style={{ flex: 1, height: 44 }} onPress={() => router.push(`/destination/${selected.id}`)} testID="preview-details" />
-            <Button title="الاتجاهات" icon="navigate" style={{ flex: 1, height: 44 }} onPress={() => openDirections(selected)} testID="preview-directions" />
+            <Button title={t("details")} variant="ghost" icon="information-circle-outline" style={{ flex: 1, height: 44 }} onPress={() => router.push(`/destination/${selected.id}`)} testID="preview-details" />
+            <Button title={t("directions")} icon="navigate" style={{ flex: 1, height: 44 }} onPress={() => openDirections(selected)} testID="preview-directions" />
           </View>
         </View>
       ) : null}

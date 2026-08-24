@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE } from "@/src/theme/theme";
 import { useFetch } from "@/src/hooks/useFetch";
+import { useI18n } from "@/src/context/LanguageContext";
 import { DetailHero } from "@/src/components/DetailHero";
 import { Stars } from "@/src/components/Stars";
 import { Button } from "@/src/components/Button";
@@ -16,14 +17,15 @@ export default function TripDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t: tr, pick, lang } = useI18n();
   const { data: t, loading, error, reload } = useFetch<any>(`/trips/${id}`, [id]);
 
   if (loading) return <View style={styles.root}><LoadingState /></View>;
   if (error || !t) return <View style={styles.root}><ErrorState message={error || undefined} onRetry={reload} /></View>;
 
   const highlights = [
-    { icon: "time-outline", label: `${t.duration_days} أيام` },
-    { icon: "people-outline", label: `${t.available_seats} مقاعد` },
+    { icon: "time-outline", label: `${t.duration_days} ${tr("days")}` },
+    { icon: "people-outline", label: `${t.available_seats} ${tr("seats_available")}` },
     { icon: "star", label: `${t.rating?.toFixed(1)}` },
   ];
 
@@ -32,8 +34,8 @@ export default function TripDetail() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         <DetailHero images={t.images} favType="trip" favId={t.id} shareTitle={t.name_ar} />
         <View style={styles.body}>
-          <Text style={styles.title}>{t.name_ar}</Text>
-          <Text style={styles.subtitle}>{t.name_en}</Text>
+          <Text style={styles.title}>{pick(t, "name")}</Text>
+          <Text style={styles.subtitle}>{lang === "en" ? t.name_ar : t.name_en}</Text>
 
           <View style={styles.highlights}>
             {highlights.map((h) => (
@@ -44,16 +46,16 @@ export default function TripDetail() {
             ))}
           </View>
 
-          <Text style={styles.desc}>{t.description_ar}</Text>
+          <Text style={styles.desc}>{pick(t, "description")}</Text>
 
-          <Sect icon="calendar-outline" title="تواريخ متاحة" />
+          <Sect icon="calendar-outline" title={tr("available_dates")} />
           <View style={styles.chips}>
             {(t.dates_ar || []).map((d: string) => (
               <View key={d} style={styles.dateChip}><Text style={styles.dateChipTxt}>{d}</Text></View>
             ))}
           </View>
 
-          <Sect icon="list-outline" title="برنامج الرحلة" />
+          <Sect icon="list-outline" title={tr("itinerary")} />
           <View style={styles.timeline}>
             {(t.itinerary || []).map((step: any, i: number) => (
               <View key={i} style={styles.tlRow}>
@@ -69,7 +71,7 @@ export default function TripDetail() {
             ))}
           </View>
 
-          <Sect icon="checkmark-circle-outline" title="يشمل" />
+          <Sect icon="checkmark-circle-outline" title={tr("includes")} />
           {(t.included || []).map((x: string) => (
             <View key={x} style={styles.incRow}>
               <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
@@ -77,7 +79,7 @@ export default function TripDetail() {
             </View>
           ))}
 
-          <Sect icon="close-circle-outline" title="لا يشمل" />
+          <Sect icon="close-circle-outline" title={tr("excludes")} />
           {(t.excluded || []).map((x: string) => (
             <View key={x} style={styles.incRow}>
               <Ionicons name="close-circle" size={18} color={COLORS.error} />
@@ -88,12 +90,12 @@ export default function TripDetail() {
           <View style={styles.twoCol}>
             <View style={styles.colCard}>
               <Ionicons name="bed-outline" size={20} color={COLORS.brand} />
-              <Text style={styles.colLabel}>الإقامة</Text>
+              <Text style={styles.colLabel}>{tr("accommodation")}</Text>
               <Text style={styles.colVal}>{t.accommodation_ar}</Text>
             </View>
             <View style={styles.colCard}>
               <Ionicons name="car-outline" size={20} color={COLORS.brand} />
-              <Text style={styles.colLabel}>المواصلات</Text>
+              <Text style={styles.colLabel}>{tr("transportation")}</Text>
               <Text style={styles.colVal}>{t.transportation_ar}</Text>
             </View>
           </View>
@@ -105,11 +107,11 @@ export default function TripDetail() {
       <View style={[styles.cta, { paddingBottom: insets.bottom + SPACING.sm }]}>
         <BlurView intensity={Platform.OS === "ios" ? 50 : 100} tint="light" style={StyleSheet.absoluteFill as any} />
         <View style={styles.priceCol}>
-          <Text style={styles.priceLabel}>ابتداءً من</Text>
+          <Text style={styles.priceLabel}>{tr("starting_from")}</Text>
           <Text style={styles.price}>${t.price}</Text>
         </View>
         <Button
-          title="احجز الآن"
+          title={tr("book_now")}
           icon="airplane"
           style={{ flex: 1 }}
           onPress={() => router.push({ pathname: "/booking", params: { type: "trip", id: t.id } })}

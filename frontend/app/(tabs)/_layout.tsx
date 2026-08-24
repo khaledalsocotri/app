@@ -7,17 +7,19 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { COLORS, SPACING, FONT, RADIUS } from "@/src/theme/theme";
+import { useI18n } from "@/src/context/LanguageContext";
 
-const TABS: Record<string, { label: string; icon: any }> = {
-  map: { label: "الخريطة", icon: "map" },
-  index: { label: "اكتشف", icon: "compass" },
-  trips: { label: "الرحلات", icon: "airplane" },
-  favorites: { label: "المفضلة", icon: "heart" },
-  account: { label: "حسابي", icon: "person" },
+const TABS: Record<string, { key: string; icon: any }> = {
+  map: { key: "tab_map", icon: "map" },
+  index: { key: "tab_discover", icon: "compass" },
+  trips: { key: "tab_trips", icon: "airplane" },
+  favorites: { key: "tab_favorites", icon: "heart" },
+  account: { key: "tab_account", icon: "person" },
 };
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   return (
     <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, SPACING.sm) }]}>
       <BlurView intensity={Platform.OS === "ios" ? 60 : 90} tint="light" style={StyleSheet.absoluteFill as any} />
@@ -36,7 +38,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
                 <Ionicons name={focused ? conf.icon : `${conf.icon}-outline`} size={22} color={focused ? COLORS.onBrandPrimary : COLORS.onSurfaceSecondary} />
               </View>
-              <Text style={[styles.label, focused && styles.labelActive]}>{conf.label}</Text>
+              <Text style={[styles.label, focused && styles.labelActive]}>{t(conf.key)}</Text>
             </Pressable>
           );
         })}

@@ -13,7 +13,21 @@ import { Button } from "@/src/components/Button";
 import { LoadingState, EmptyState } from "@/src/components/States";
 import { useToast } from "@/src/components/Toast";
 
-type Field = { k: string; t: "text" | "number" | "bool" | "image"; label: string; multiline?: boolean };
+type Field = { k: string; t: "text" | "number" | "bool" | "image" | "list" | "icon"; label: string; multiline?: boolean };
+
+// Preset map marker icons the admin can choose from (Ionicons names).
+const MARKER_ICONS: { key: string; label: string }[] = [
+  { key: "leaf", label: "طبيعة" },
+  { key: "umbrella", label: "شاطئ" },
+  { key: "triangle", label: "جبل" },
+  { key: "bonfire", label: "كهف / مغامرة" },
+  { key: "water", label: "وادٍ / ماء" },
+  { key: "boat", label: "قارب / جزيرة" },
+  { key: "business", label: "ثقافي" },
+  { key: "bed", label: "إقامة" },
+  { key: "construct", label: "خدمات" },
+  { key: "sparkles", label: "تجربة" },
+];
 
 const ENTITIES: Record<string, { label: string; fields: Field[] }> = {
   destinations: {
@@ -22,12 +36,27 @@ const ENTITIES: Record<string, { label: string; fields: Field[] }> = {
       { k: "name_ar", t: "text", label: "الاسم بالعربية" },
       { k: "name_en", t: "text", label: "الاسم بالإنجليزية" },
       { k: "category", t: "text", label: "الفئة: nature / beaches / activities / accommodation / services / cultural / experiences" },
-      { k: "location_ar", t: "text", label: "الموقع" },
-      { k: "description_ar", t: "text", label: "الوصف", multiline: true },
+      { k: "location_ar", t: "text", label: "الموقع (عربي)" },
+      { k: "location_en", t: "text", label: "الموقع (إنجليزي)" },
+      { k: "description_ar", t: "text", label: "الوصف (عربي)", multiline: true },
+      { k: "description_en", t: "text", label: "الوصف (إنجليزي)", multiline: true },
       { k: "cover_image", t: "image", label: "الصورة" },
+      { k: "marker_icon", t: "icon", label: "أيقونة العلامة على الخريطة" },
       { k: "latitude", t: "number", label: "خط العرض" },
       { k: "longitude", t: "number", label: "خط الطول" },
       { k: "rating", t: "number", label: "التقييم (1-5)" },
+      { k: "story_ar", t: "text", label: "معرفة محلية / قصة المكان (عربي)", multiline: true },
+      { k: "story_en", t: "text", label: "معرفة محلية / قصة المكان (إنجليزي)", multiline: true },
+      { k: "facts_ar", t: "text", label: "حقائق ممتعة (عربي) — سطر لكل حقيقة", multiline: true },
+      { k: "facts_en", t: "text", label: "حقائق ممتعة (إنجليزي) — سطر لكل حقيقة", multiline: true },
+      { k: "warnings_ar", t: "text", label: "تنبيهات وسلامة (عربي) — سطر لكل تنبيه", multiline: true },
+      { k: "warnings_en", t: "text", label: "تنبيهات وسلامة (إنجليزي) — سطر لكل تنبيه", multiline: true },
+      { k: "best_time_ar", t: "text", label: "أفضل وقت للزيارة" },
+      { k: "duration_ar", t: "text", label: "المدة" },
+      { k: "difficulty_ar", t: "text", label: "الصعوبة" },
+      { k: "how_to_get_ar", t: "text", label: "كيفية الوصول", multiline: true },
+      { k: "activities", t: "list", label: "الأنشطة (افصل بينها بفاصلة)" },
+      { k: "nearby_services", t: "list", label: "الأماكن / الخدمات القريبة (افصل بينها بفاصلة)" },
       { k: "featured", t: "bool", label: "مميّز" },
       { k: "popular", t: "bool", label: "شائع" },
     ],
@@ -167,8 +196,10 @@ export default function AdminContent() {
     fields.forEach((f) => {
       let v = form[f.k];
       if (f.t === "number") v = v === undefined || v === "" ? 0 : parseFloat(v);
-      if (f.t === "bool") v = !!v;
-      payload[f.k] = v ?? (f.t === "text" || f.t === "image" ? "" : 0);
+      else if (f.t === "bool") v = !!v;
+      else if (f.t === "list") v = Array.isArray(v) ? v : String(v || "").split(/[,،\n]/).map((s) => s.trim()).filter(Boolean);
+      const fallback = f.t === "list" ? [] : f.t === "number" ? 0 : "";
+      payload[f.k] = v ?? fallback;
     });
     payload.images = [form.cover_image];
     setSaving(true);
@@ -269,6 +300,23 @@ export default function AdminContent() {
                       thumbColor="#fff"
                     />
                   </View>
+                ) : f.t === "icon" ? (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
+                    {MARKER_ICONS.map((mi) => {
+                      const on = form[f.k] === mi.key;
+                      return (
+                        <Pressable
+                          key={mi.key}
+                          testID={`marker-${mi.key}`}
+                          style={[styles.iconChip, on && styles.iconChipOn]}
+                          onPress={() => setForm((s: any) => ({ ...s, [f.k]: mi.key }))}
+                        >
+                          <Ionicons name={mi.key as any} size={20} color={on ? "#fff" : COLORS.brand} />
+                          <Text style={[styles.iconChipTxt, on && { color: "#fff" }]}>{mi.label}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
                 ) : f.t === "image" ? (
                   <View style={styles.imageField}>
                     {form.cover_image ? <Image source={form.cover_image} style={styles.coverPreview} contentFit="cover" /> : null}
@@ -287,13 +335,17 @@ export default function AdminContent() {
                 ) : (
                   <TextInput
                     testID={`field-${f.k}`}
-                    style={[styles.input, f.multiline && styles.inputMulti]}
+                    style={[styles.input, (f.multiline || f.t === "list") && styles.inputMulti]}
                     placeholder={f.label}
                     placeholderTextColor={COLORS.onSurfaceSecondary}
-                    value={form[f.k] !== undefined && form[f.k] !== null ? String(form[f.k]) : ""}
+                    value={
+                      f.t === "list"
+                        ? Array.isArray(form[f.k]) ? form[f.k].join("، ") : form[f.k] || ""
+                        : form[f.k] !== undefined && form[f.k] !== null ? String(form[f.k]) : ""
+                    }
                     onChangeText={(v) => setForm((s: any) => ({ ...s, [f.k]: v }))}
                     keyboardType={f.t === "number" ? "numeric" : "default"}
-                    multiline={f.multiline}
+                    multiline={f.multiline || f.t === "list"}
                     textAlign="right"
                   />
                 )}
@@ -328,6 +380,10 @@ const styles = StyleSheet.create({
   input: { backgroundColor: COLORS.surface, borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md, paddingHorizontal: SPACING.lg, height: 52, fontFamily: FONT.body, fontSize: FSIZE.lg, color: COLORS.onSurface, textAlign: "right" },
   inputMulti: { height: 100, paddingTop: SPACING.md, textAlignVertical: "top" },
   switchRow: { alignItems: "flex-end" },
+  iconRow: { flexDirection: "row", gap: SPACING.sm, paddingVertical: 2 },
+  iconChip: { alignItems: "center", justifyContent: "center", gap: 4, minWidth: 76, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md, borderRadius: RADIUS.md, backgroundColor: COLORS.surface, borderWidth: 1.5, borderColor: COLORS.border },
+  iconChipOn: { backgroundColor: COLORS.brand, borderColor: COLORS.brand },
+  iconChipTxt: { fontFamily: FONT.medium, fontSize: FSIZE.sm, color: COLORS.onSurfaceSecondary, textAlign: "center" },
   imageField: { flexDirection: "row", gap: SPACING.md, alignItems: "flex-start" },
   coverPreview: { width: 72, height: 72, borderRadius: RADIUS.md, backgroundColor: COLORS.surfaceSecondary },
 });

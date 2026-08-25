@@ -11,6 +11,8 @@ import { useAuth } from "@/src/context/AuthContext";
 import { useI18n } from "@/src/context/LanguageContext";
 import { Section, Rail } from "@/src/components/Section";
 import { DestinationRailCard, ExperienceCard, ProductCard, TripCard, PromoCard } from "@/src/components/cards";
+import { DiscoverMap } from "@/src/components/DiscoverMap";
+import { CategoryChips } from "@/src/components/CategoryChips";
 import { FavoriteButton } from "@/src/components/FavoriteButton";
 import { Stars } from "@/src/components/Stars";
 import { LoadingState, ErrorState } from "@/src/components/States";
@@ -32,6 +34,13 @@ export default function Discover() {
   const { width } = useWindowDimensions();
   const HERO_W = Math.min(width, 640) - SPACING.lg * 2;
   const { data, loading, error, reload } = useFetch<any>("/discover");
+  const { data: cats } = useFetch<any[]>("/categories");
+  const { data: allDest } = useFetch<any[]>("/destinations");
+  const [cat, setCat] = React.useState("all");
+  const colorMap: Record<string, any> = {};
+  (cats || []).forEach((c: any) => (colorMap[c.key] = { color: c.color, icon: c.icon }));
+  const chips = (cats || []).map((c: any) => ({ key: c.key, name_ar: c.name_ar, icon: c.icon }));
+  const filteredDest = (allDest || []).filter((d: any) => cat === "all" || d.category === cat);
 
   return (
     <View style={styles.root}>
@@ -55,6 +64,9 @@ export default function Discover() {
           <Ionicons name="search" size={20} color={COLORS.onSurfaceSecondary} />
           <Text style={styles.searchTxt}>{t("search_placeholder")}</Text>
         </Pressable>
+
+        {/* Large interactive Socotra map */}
+        <DiscoverMap destinations={allDest || []} colorMap={colorMap} />
 
         {loading ? (
           <LoadingState />

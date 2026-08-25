@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 5 (V1 FINAL — Discover Socotra rich destination data). Backend 65/65 pytest pass (added TestDestinationRichContent with 3 tests: startup backfill enrichment populates marker_icon+story_ar/en+facts_ar/en+warnings_ar/en on all 12 seeded destinations; GET /api/destinations/{id} returns the rich fields; admin POST /api/admin/destinations + PUT /api/admin/destinations/{id} persist ALL new fields exactly — marker_icon, story_ar, story_en, facts_ar, facts_en, warnings_ar, warnings_en, best_time_ar, duration_ar, difficulty_ar, how_to_get_ar, activities (array), nearby_services (array) — verified round-trip via GET). Frontend (mobile 390x844, Arabic RTL): (1) Discover tab (index/Discover) shows the interactive-map hero banner + horizontal rail of testID='discover-pin-<id>' chips (12 pins render, one per destination); tapping a chip reveals the shared MapLocationCard with testID='map-location-card' displaying the three sections: 'معرفة محلية' (Local knowledge), 'حقائق ممتعة' (Interesting facts as bullets), 'تنبيهات وسلامة' (Safety notes) — all sections rendered with backfilled Arabic content, plus map-card-details CTA. (2) Tapping 'عرض التفاصيل' (map-card-details) navigates to /destination/{id} and the detail page renders the same three sections with the Arabic story/facts/warnings. (3) Admin content (/admin/content) 'الوجهات' Add form renders ALL new inputs: field-story_ar/en, field-facts_ar/en, field-warnings_ar/en, field-best_time_ar, field-duration_ar, field-difficulty_ar, field-how_to_get_ar, field-activities, field-nearby_services, plus marker-icon chips testID='marker-leaf', 'marker-umbrella', 'marker-triangle', 'marker-bonfire', 'marker-water', 'marker-boat', 'marker-business', 'marker-bed', 'marker-construct', 'marker-sparkles'. (4) Bilingual toggle in /account (menu-language) switches to English and the destination detail page renders 'Local knowledge', 'Interesting facts', 'Safety' section headings, with English body text pulled from story_en/facts_en/warnings_en via pick() fallback. No red screens or crashes.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "global", "issues": ["Pre-existing (non-blocking) RN-Web console warnings: shadow* deprecated (use boxShadow), props.pointerEvents deprecated (use style.pointerEvents). Also unrelated 401 (Failed to load resource) fires once on the pre-login screen for an anonymous /auth/me probe — expected because there is no token yet."]}
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/test_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "None blocking. V1 rich-content feature is fully functional end-to-end (backfill + admin CRUD + Discover card + detail page + bilingual toggle).",
+    "Optional: expose an explicit testID on the marker-icon field wrapper (currently only the individual marker-<key> chips carry testIDs); non-blocking for testing."
+  ],
+  "critical_code_review_comments": [
+    "Backfill in server.py startup is idempotent (only $set for missing keys) — safe to run on every boot. Category→icon mapping (nature=leaf, beaches=umbrella, activities=triangle, accommodation=bed, services=construct, cultural=business, experiences=sparkles) matches the MARKER_ICONS admin picker keys.",
+    "Generic admin CRUD (/api/admin/{entity}) accepts arbitrary dict bodies — new fields go through untouched, and _id is stripped in the update path. This is why activities/nearby_services arrays and multi-line story/facts/warnings persist without schema changes.",
+    "MapLocationCard uses pick(item, 'story'/'facts'/'warnings') with _en → _ar fallback via LanguageContext, satisfying the bilingual acceptance criterion.",
+    "toLines() in MapLocationCard splits on newlines and bullet chars (•·) and strips leading dash/asterisks — matches the admin instruction 'سطر لكل حقيقة' (one line per fact)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_backend.py (added TestDestinationRichContent with 3 tests)"
+  ],
+  "success_rate": { "backend": "100% (65/65)", "frontend": "100% of the 6 requested V1 flows verified (admin CRUD rich fields persist; startup backfill; admin form new inputs render incl. marker chips; Discover pin → rich card with 3 sections; details CTA → detail page with 3 sections; language toggle → English content)" },
+  "seed_data_creation": "None new. TestDestinationRichContent creates one 'TEST Rich' destination via admin CRUD and deletes it in a finally block.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "V1 is complete. Rich destination content lives on the destinations documents (marker_icon + {story,facts,warnings}_{ar,en} + best_time_ar/duration_ar/difficulty_ar/how_to_get_ar + activities[]/nearby_services[]). Backfill runs every startup but is idempotent. Discover tab (Expo Router index) — NOT /map — hosts DiscoverMap.web.tsx with discover-pin-<id> chips + MapLocationCard. /map tab hosts the category-grouped fallback layout (not the rich card). Admin form is /admin/content 'الوجهات' tab; marker-<icon> chips live inside the destinations form. Bilingual switch is /account → menu-language.",
+  "rca_of_issue": "N/A — no regressions or bugs surfaced."
+}

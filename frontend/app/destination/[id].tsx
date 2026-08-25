@@ -62,6 +62,13 @@ export default function DestinationDetail() {
 
           <Text style={styles.desc}>{pick(d, "description")}</Text>
 
+          {pick(d, "story") ? (
+            <>
+              <SectionTitle icon="book-outline" title={t("local_knowledge")} />
+              <Text style={styles.desc}>{pick(d, "story")}</Text>
+            </>
+          ) : null}
+
           {/* Info grid */}
           <View style={styles.infoGrid}>
             {info.map((it) => (
@@ -98,6 +105,30 @@ export default function DestinationDetail() {
             </>
           ) : null}
 
+          {toLines(pick(d, "facts")).length ? (
+            <>
+              <SectionTitle icon="bulb-outline" title={t("interesting_facts")} />
+              {toLines(pick(d, "facts")).map((f, i) => (
+                <View key={i} style={styles.factRow}>
+                  <View style={styles.factDot} />
+                  <Text style={styles.factTxt}>{f}</Text>
+                </View>
+              ))}
+            </>
+          ) : null}
+
+          {toLines(pick(d, "warnings")).length ? (
+            <View style={styles.warnBox}>
+              <SectionTitle icon="warning-outline" title={t("safety_notes")} style={{ marginTop: 0 }} color={COLORS.error} />
+              {toLines(pick(d, "warnings")).map((w, i) => (
+                <View key={i} style={styles.factRow}>
+                  <View style={[styles.factDot, { backgroundColor: COLORS.error }]} />
+                  <Text style={styles.factTxt}>{w}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           <ReviewsSection itemType="destination" itemId={d.id} />
 
           {d.related?.length ? (
@@ -120,14 +151,20 @@ export default function DestinationDetail() {
   );
 }
 
-function SectionTitle({ icon, title, style }: { icon: any; title: string; style?: any }) {
+function SectionTitle({ icon, title, style, color }: { icon: any; title: string; style?: any; color?: string }) {
   return (
     <View style={[styles.sectTitle, style]}>
-      <Ionicons name={icon} size={18} color={COLORS.brand} />
-      <Text style={styles.sectTitleTxt}>{title}</Text>
+      <Ionicons name={icon} size={18} color={color || COLORS.brand} />
+      <Text style={[styles.sectTitleTxt, color ? { color } : null]}>{title}</Text>
     </View>
   );
 }
+
+const toLines = (v?: string) =>
+  (v || "")
+    .split(/[\n•·]/)
+    .map((s) => s.trim().replace(/^[-–*]\s*/, ""))
+    .filter(Boolean);
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.surface },
@@ -150,5 +187,9 @@ const styles = StyleSheet.create({
   chip: { backgroundColor: COLORS.brandTertiary, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, borderRadius: RADIUS.pill },
   chipAlt: { backgroundColor: COLORS.surfaceSecondary },
   chipTxt: { fontFamily: FONT.medium, fontSize: FSIZE.base, color: COLORS.onBrandTertiary },
+  factRow: { flexDirection: "row-reverse", alignItems: "flex-start", gap: 8, marginTop: SPACING.sm },
+  factDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.brand, marginTop: 9 },
+  factTxt: { flex: 1, fontFamily: FONT.body, fontSize: FSIZE.base, lineHeight: 24, color: COLORS.onSurfaceSecondary, textAlign: "right" },
+  warnBox: { marginTop: SPACING.xl, backgroundColor: "rgba(214,69,65,0.07)", borderRadius: RADIUS.md, padding: SPACING.lg, borderWidth: 1, borderColor: "rgba(214,69,65,0.25)" },
   cta: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: COLORS.border },
 });

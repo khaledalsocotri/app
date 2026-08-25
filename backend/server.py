@@ -843,6 +843,33 @@ async def startup():
         ])
         logger.info("Services seed inserted.")
 
+    # Idempotent enrichment: give existing destinations a map marker icon and
+    # sample admin-editable rich content (story/facts/warnings) if missing, so
+    # the Discover map & detail pages have data to render out of the box.
+    _CAT_ICON = {
+        "nature": "leaf", "beaches": "umbrella", "activities": "triangle",
+        "accommodation": "bed", "services": "construct", "cultural": "business",
+        "experiences": "sparkles",
+    }
+    async for d in db.destinations.find({}):
+        upd = {}
+        if not d.get("marker_icon"):
+            upd["marker_icon"] = _CAT_ICON.get(d.get("category"), "location")
+        if not d.get("story_ar"):
+            nm_ar = d.get("name_ar", "هذا الموقع")
+            nm_en = d.get("name_en", "this site")
+            upd["story_ar"] = f"يُعد {nm_ar} من المعالم المميزة في جزيرة سقطرى، حيث يجمع بين الطبيعة الفريدة وتاريخ السكان المحليين الذين يرتبطون بالمكان منذ أجيال."
+            upd["story_en"] = f"{nm_en} is one of Socotra's distinctive landmarks, blending unique nature with the heritage of local communities tied to this place for generations."
+        if not d.get("facts_ar"):
+            upd["facts_ar"] = "سقطرى موقع تراث عالمي مُدرج ضمن اليونسكو.\nتضم الجزيرة نباتات لا توجد في أي مكان آخر على الأرض.\nأفضل فترة للزيارة بين أكتوبر وأبريل."
+            upd["facts_en"] = "Socotra is a UNESCO World Heritage Site.\nThe island hosts plants found nowhere else on Earth.\nBest visited between October and April."
+        if not d.get("warnings_ar"):
+            upd["warnings_ar"] = "احرص على اصطحاب مرشد محلي في المواقع الوعرة.\nخذ كمية كافية من الماء، فالخدمات محدودة.\nتغطية الإنترنت والاتصالات ضعيفة في المناطق النائية."
+            upd["warnings_en"] = "Bring a local guide for rugged areas.\nCarry enough water — services are limited.\nInternet and mobile coverage are weak in remote areas."
+        if upd:
+            await db.destinations.update_one({"id": d["id"]}, {"$set": upd})
+    logger.info("Destination enrichment backfill complete.")
+
 
 @app.on_event("shutdown")
 async def shutdown():

@@ -528,6 +528,77 @@ class TestAdminUnknownEntity:
         assert r.status_code == 404
 
 
+# --------------------------- Destinations Rich Content (V1 final) ---------------------------
+class TestDestinationRichContent:
+    """Verify backfill + admin CRUD for marker_icon/story/facts/warnings/etc."""
+
+    def test_startup_backfill_populated_on_seeded(self, api, base_url):
+        arr = api.get(f"{base_url}/destinations").json()
+        assert len(arr) > 0
+        for d in arr:
+            assert d.get("marker_icon"), f"missing marker_icon on {d.get('id')}"
+            assert d.get("story_ar"), f"missing story_ar on {d.get('id')}"
+            assert d.get("story_en"), f"missing story_en on {d.get('id')}"
+            assert d.get("facts_ar"), f"missing facts_ar on {d.get('id')}"
+            assert d.get("facts_en"), f"missing facts_en on {d.get('id')}"
+            assert d.get("warnings_ar"), f"missing warnings_ar on {d.get('id')}"
+            assert d.get("warnings_en"), f"missing warnings_en on {d.get('id')}"
+
+    def test_destination_detail_returns_rich_fields(self, api, base_url):
+        arr = api.get(f"{base_url}/destinations").json()
+        did = arr[0]["id"]
+        r = api.get(f"{base_url}/destinations/{did}")
+        assert r.status_code == 200
+        body = r.json()
+        for k in ["marker_icon", "story_ar", "story_en", "facts_ar", "facts_en", "warnings_ar", "warnings_en"]:
+            assert k in body and body[k], f"detail missing {k}"
+
+    def test_admin_create_and_edit_persists_all_new_fields(self, api, base_url, admin_headers):
+        payload = {
+            "name_ar": "TEST ريتش", "name_en": "TEST Rich",
+            "category": "nature",
+            "cover_image": "https://example.com/x.jpg",
+            "location_ar": "TEST", "location_en": "TEST",
+            "marker_icon": "leaf",
+            "story_ar": "قصة عربية", "story_en": "English story",
+            "facts_ar": "حقيقة 1\nحقيقة 2", "facts_en": "Fact 1\nFact 2",
+            "warnings_ar": "تحذير 1\nتحذير 2", "warnings_en": "Warning 1\nWarning 2",
+            "best_time_ar": "أكتوبر - أبريل",
+            "duration_ar": "3 ساعات",
+            "difficulty_ar": "سهلة",
+            "how_to_get_ar": "من حديبو بسيارة دفع رباعي",
+            "activities": ["سباحة", "تصوير"],
+            "nearby_services": ["مطعم", "وقود"],
+            "rating": 4.5,
+            "featured": False, "popular": False,
+        }
+        r = api.post(f"{base_url}/admin/destinations", json=payload, headers=admin_headers)
+        assert r.status_code == 200, r.text
+        new_id = r.json()["id"]
+        try:
+            # GET verify persistence of every new field with exact values
+            got = api.get(f"{base_url}/destinations/{new_id}").json()
+            for k, v in payload.items():
+                assert got.get(k) == v, f"field {k} not persisted; got {got.get(k)!r} expected {v!r}"
+
+            # PUT update the rich fields
+            upd = {
+                "marker_icon": "umbrella",
+                "story_ar": "قصة محدثة", "story_en": "Updated story",
+                "facts_ar": "حقيقة جديدة", "facts_en": "New fact",
+                "warnings_ar": "تحذير محدث", "warnings_en": "Updated warning",
+                "activities": ["غطس"],
+                "nearby_services": ["فندق"],
+            }
+            ru = api.put(f"{base_url}/admin/destinations/{new_id}", json=upd, headers=admin_headers)
+            assert ru.status_code == 200, ru.text
+            after = api.get(f"{base_url}/destinations/{new_id}").json()
+            for k, v in upd.items():
+                assert after.get(k) == v, f"update {k} not persisted; got {after.get(k)!r}"
+        finally:
+            api.delete(f"{base_url}/admin/destinations/{new_id}", headers=admin_headers)
+
+
 # --------------------------- Host Reply (Reviews) ---------------------------
 class TestHostReply:
     def test_reply_requires_admin(self, api, base_url, auth_headers):

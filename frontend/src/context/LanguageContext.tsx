@@ -50,6 +50,11 @@ const STRINGS: Record<string, { ar: string; en: string }> = {
   featured: { ar: "مميّز", en: "Featured" },
   // Map
   search_in_map: { ar: "ابحث في الخريطة", en: "Search the map" },
+  explore_region: { ar: "استكشف هذه المنطقة", en: "Explore this area" },
+  map_type: { ar: "نوع الخريطة", en: "Map type" },
+  my_location: { ar: "موقعي", en: "My location" },
+  download_offline: { ar: "قريباً: تنزيل الخريطة للاستخدام دون اتصال", en: "Coming soon: offline maps" },
+  places_here: { ar: "الأماكن في هذه المنطقة", en: "Places in this area" },
   map_web_note: { ar: "الخريطة التفاعلية تعمل على تطبيق الجوال. هذه قائمة المواقع.", en: "The interactive map runs on the mobile app. Here is the list of places." },
   details: { ar: "التفاصيل", en: "Details" },
   directions: { ar: "الاتجاهات", en: "Directions" },

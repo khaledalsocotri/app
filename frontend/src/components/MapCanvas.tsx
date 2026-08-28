@@ -1,51 +1,55 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import { Ionicons } from "@expo/vector-icons";
-import { COLORS, SHADOW } from "@/src/theme/theme";
+import { StyleSheet } from "react-native";
+import { Map, Camera, Marker, UserLocation } from "@maplibre/maplibre-react-native";
+import { COLORS } from "@/src/theme/theme";
+import { MapPin } from "@/src/components/MapPin";
+import { mapStyleJSON, SOCOTRA_CENTER, SOCOTRA_ZOOM, MapType } from "@/src/components/mapStyle";
+import { MapFallback, isExpoGo } from "@/src/components/MapFallback";
 
-const SOCOTRA_REGION = { latitude: 12.5, longitude: 53.95, latitudeDelta: 0.85, longitudeDelta: 0.85 };
+type CameraState = { center: [number, number]; zoom: number; heading: number };
 
-// Distinctive teal tourism map theme.
-const MAP_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#e9f2f2" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#0e4a52" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#a9dfe4" }] },
-  { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#dcebdc" }] },
-  { featureType: "poi", stylers: [{ visibility: "off" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
-  { featureType: "administrative", elementType: "geometry", stylers: [{ visibility: "off" }] },
-];
-
-export function MapCanvas({ destinations, colorMap, selected, granted, onSelect }: any) {
+export function MapCanvas({
+  destinations,
+  colorMap,
+  selected,
+  granted,
+  onSelect,
+  mapType = "hybrid",
+  camera,
+}: {
+  destinations: any[];
+  colorMap: Record<string, { color: string; icon: string }>;
+  selected: any;
+  granted: boolean;
+  onSelect: (d: any) => void;
+  mapType?: MapType;
+  camera?: CameraState;
+}) {
+  const cam = camera || { center: SOCOTRA_CENTER, zoom: SOCOTRA_ZOOM, heading: 0 };
+  if (isExpoGo) return <MapFallback style={StyleSheet.absoluteFill} />;
   return (
-    <MapView
+    <Map
       style={StyleSheet.absoluteFill}
-      provider={PROVIDER_GOOGLE}
-      initialRegion={SOCOTRA_REGION}
-      customMapStyle={MAP_STYLE}
-      showsUserLocation={granted}
-      showsMyLocationButton={false}
+      mapStyle={mapStyleJSON(mapType)}
+      logo={false}
+      attribution={false}
+      compass={false}
       onPress={() => onSelect(null)}
     >
-      {destinations.map((d: any) => {
-        const cfg = colorMap[d.category] || { color: COLORS.brand, icon: "location" };
-        return (
-          <Marker key={d.id} coordinate={{ latitude: d.latitude, longitude: d.longitude }} onPress={() => onSelect(d)}>
-            <View style={[styles.marker, { backgroundColor: cfg.color }, selected?.id === d.id && styles.markerActive]}>
-              <Ionicons name={cfg.icon} size={16} color="#fff" />
-            </View>
-          </Marker>
-        );
-      })}
-    </MapView>
+      <Camera center={cam.center} zoom={cam.zoom} bearing={cam.heading} duration={600} />
+      {granted ? <UserLocation /> : null}
+      {(destinations || [])
+        .filter((d) => typeof d.latitude === "number" && typeof d.longitude === "number")
+        .map((d) => {
+          const cfg = colorMap[d.category] || { color: COLORS.brand, icon: "location" };
+          return (
+            <Marker key={d.id} coordinate={[d.longitude, d.latitude]} anchor="bottom" onPress={() => onSelect(d)}>
+              <MapPin color={cfg.color} icon={d.marker_icon || cfg.icon} active={selected?.id === d.id} />
+            </Marker>
+          );
+        })}
+    </Map>
   );
 }
 
 export const supportsNativeMap = true;
-
-const styles = StyleSheet.create({
-  marker: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#fff", ...SHADOW.soft },
-  markerActive: { transform: [{ scale: 1.25 }] },
-});

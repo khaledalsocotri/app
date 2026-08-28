@@ -25,7 +25,10 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.emergent.islanddiscovery.suuec5",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "config": {
         "googleMaps": {
           "apiKey": ""
@@ -59,7 +62,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#0A2326"
         }
-      ]
+      ],
+      "@maplibre/maplibre-react-native"
     ],
     "experiments": {
       "typedRoutes": true

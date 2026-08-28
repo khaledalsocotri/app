@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { View, Text, StyleSheet, Pressable, Platform, Linking } from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform, Linking, Modal, FlatList } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
@@ -7,12 +7,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE, SHADOW } from "@/src/theme/theme";
 import { useI18n } from "@/src/context/LanguageContext";
+import { useToast } from "@/src/components/Toast";
 import { useFetch } from "@/src/hooks/useFetch";
 import { CategoryChips } from "@/src/components/CategoryChips";
 import { FavoriteButton } from "@/src/components/FavoriteButton";
 import { Stars } from "@/src/components/Stars";
 import { Button } from "@/src/components/Button";
 import { MapCanvas, supportsNativeMap } from "@/src/components/MapCanvas";
+import { SOCOTRA_CENTER, SOCOTRA_ZOOM, MAP_TYPE_ORDER, MAP_TYPE_LABEL, MapType } from "@/src/components/mapStyle";
 
 const TABBAR = 92;
 
@@ -20,9 +22,13 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t, pick } = useI18n();
+  const toast = useToast();
   const [category, setCategory] = useState("all");
   const [selected, setSelected] = useState<any>(null);
   const [granted, setGranted] = useState(false);
+  const [mapType, setMapType] = useState<MapType>("hybrid");
+  const [camera, setCamera] = useState({ center: SOCOTRA_CENTER as [number, number], zoom: SOCOTRA_ZOOM, heading: 0 });
+  const [listOpen, setListOpen] = useState(false);
 
   const { data: cats } = useFetch<any[]>("/categories");
   const { data: destinations } = useFetch<any[]>("/destinations");
@@ -40,10 +46,25 @@ export default function MapScreen() {
 
   const requestLocation = async () => {
     const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
-    if (status === "granted") return setGranted(true);
-    const res = await Location.requestForegroundPermissionsAsync();
-    if (res.status === "granted") setGranted(true);
-    else if (!res.canAskAgain || !canAskAgain) Linking.openSettings();
+    let ok = status === "granted";
+    if (!ok) {
+      const res = await Location.requestForegroundPermissionsAsync();
+      ok = res.status === "granted";
+      if (!ok && (!res.canAskAgain || !canAskAgain)) return Linking.openSettings();
+    }
+    if (!ok) return;
+    setGranted(true);
+    try {
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setCamera({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 12, heading: 0 });
+    } catch {}
+  };
+
+  const recenter = () => setCamera({ center: SOCOTRA_CENTER, zoom: SOCOTRA_ZOOM, heading: 0 });
+  const cycleMapType = () => {
+    const next = MAP_TYPE_ORDER[(MAP_TYPE_ORDER.indexOf(mapType) + 1) % MAP_TYPE_ORDER.length];
+    setMapType(next);
+    toast.show(MAP_TYPE_LABEL[next], "success");
   };
 
   useEffect(() => {
@@ -63,7 +84,7 @@ export default function MapScreen() {
 
   return (
     <View style={styles.root}>
-      <MapCanvas destinations={filtered} colorMap={colorMap} selected={selected} granted={granted} onSelect={setSelected} />
+      <MapCanvas destinations={filtered} colorMap={colorMap} selected={selected} granted={granted} onSelect={setSelected} mapType={mapType} camera={camera} />
 
       {/* Floating search + chips */}
       <View style={[styles.topWrap, { paddingTop: insets.top + SPACING.sm }]} pointerEvents="box-none">
@@ -79,12 +100,59 @@ export default function MapScreen() {
         <CategoryChips chips={chips} active={category} onChange={setCategory} />
       </View>
 
-      {/* Locate button (native only) */}
+      {/* Right-side floating controls (native map only) */}
       {supportsNativeMap && (
-        <Pressable style={[styles.locate, { bottom: (selected ? 220 : TABBAR) + SPACING.md }]} onPress={requestLocation} testID="map-locate">
-          <Ionicons name={granted ? "locate" : "locate-outline"} size={22} color={COLORS.brand} />
+        <View style={[styles.controls, { top: insets.top + 170 }]} pointerEvents="box-none">
+          <Pressable style={styles.ctrlBtn} onPress={recenter} testID="map-compass">
+            <Ionicons name="compass-outline" size={22} color={COLORS.brand} />
+          </Pressable>
+          <Pressable style={styles.ctrlBtn} onPress={cycleMapType} testID="map-layers">
+            <Ionicons name="layers-outline" size={21} color={COLORS.brand} />
+          </Pressable>
+          <Pressable style={styles.ctrlBtn} onPress={requestLocation} testID="map-locate">
+            <Ionicons name={granted ? "locate" : "locate-outline"} size={22} color={COLORS.brand} />
+          </Pressable>
+          <Pressable style={styles.ctrlBtn} onPress={() => toast.show(t("download_offline"), "success")} testID="map-download">
+            <Ionicons name="download-outline" size={21} color={COLORS.brand} />
+          </Pressable>
+        </View>
+      )}
+
+      {/* Bottom "Explore this area" button (native map only, hidden when a card is open) */}
+      {supportsNativeMap && !selected && (
+        <Pressable style={[styles.exploreBtn, SHADOW.card, { bottom: TABBAR + SPACING.md }]} onPress={() => setListOpen(true)} testID="map-explore">
+          <Ionicons name="chevron-down" size={18} color="#fff" />
+          <Text style={styles.exploreTxt}>{t("explore_region")}</Text>
         </Pressable>
       )}
+
+      {/* Explore list sheet */}
+      <Modal visible={listOpen} animationType="slide" transparent onRequestClose={() => setListOpen(false)}>
+        <Pressable style={styles.sheetBackdrop} onPress={() => setListOpen(false)} />
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + SPACING.md }]}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>{t("places_here")} · {filtered.length}</Text>
+          <FlatList
+            data={filtered}
+            keyExtractor={(d) => d.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: SPACING.lg }}
+            renderItem={({ item }) => (
+              <Pressable style={styles.sheetRow} onPress={() => { setListOpen(false); router.push(`/destination/${item.id}`); }} testID={`explore-row-${item.id}`}>
+                <Image source={item.cover_image} style={styles.sheetImg} contentFit="cover" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sheetName} numberOfLines={1}>{pick(item, "name")}</Text>
+                  <View style={styles.sheetMeta}>
+                    <Ionicons name="location-outline" size={12} color={COLORS.onSurfaceSecondary} />
+                    <Text style={styles.sheetLoc} numberOfLines={1}>{pick(item, "location")}</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-back" size={18} color={COLORS.onSurfaceSecondary} />
+              </Pressable>
+            )}
+          />
+        </View>
+      </Modal>
 
       {/* Preview card */}
       {selected ? (
@@ -121,7 +189,19 @@ const styles = StyleSheet.create({
   search: { flexDirection: "row", alignItems: "center", gap: SPACING.sm, marginHorizontal: SPACING.lg, backgroundColor: COLORS.surface, borderRadius: RADIUS.md, paddingHorizontal: SPACING.lg, height: 52 },
   searchTxt: { flex: 1, fontFamily: FONT.body, fontSize: FSIZE.base, color: COLORS.onSurfaceSecondary, textAlign: "right" },
   mapPin: { width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.brandTertiary, alignItems: "center", justifyContent: "center" },
-  locate: { position: "absolute", right: SPACING.lg, width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.surface, alignItems: "center", justifyContent: "center", ...SHADOW.card },
+  controls: { position: "absolute", right: SPACING.lg, gap: SPACING.sm },
+  ctrlBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.surface, alignItems: "center", justifyContent: "center", ...SHADOW.card },
+  exploreBtn: { position: "absolute", alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: COLORS.brand, paddingHorizontal: SPACING.xl, height: 48, borderRadius: 24 },
+  exploreTxt: { fontFamily: FONT.bold, fontSize: FSIZE.base, color: "#fff" },
+  sheetBackdrop: { flex: 1, backgroundColor: "rgba(10,35,38,0.4)" },
+  sheet: { position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "70%", backgroundColor: COLORS.surface, borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
+  sheetHandle: { alignSelf: "center", width: 44, height: 5, borderRadius: 3, backgroundColor: COLORS.border, marginBottom: SPACING.md },
+  sheetTitle: { fontFamily: FONT.displayBold, fontSize: FSIZE.lg, color: COLORS.onSurface, textAlign: "right", marginBottom: SPACING.md },
+  sheetRow: { flexDirection: "row", alignItems: "center", gap: SPACING.md, paddingVertical: SPACING.sm },
+  sheetImg: { width: 56, height: 56, borderRadius: RADIUS.md, backgroundColor: COLORS.surfaceSecondary },
+  sheetName: { fontFamily: FONT.bold, fontSize: FSIZE.base, color: COLORS.onSurface, textAlign: "right" },
+  sheetMeta: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  sheetLoc: { flex: 1, fontFamily: FONT.body, fontSize: FSIZE.sm, color: COLORS.onSurfaceSecondary, textAlign: "right" },
   preview: { position: "absolute", left: SPACING.lg, right: SPACING.lg, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.md },
   previewMain: { flexDirection: "row", alignItems: "center", gap: SPACING.md },
   previewImg: { width: 76, height: 76, borderRadius: RADIUS.md, backgroundColor: COLORS.surfaceSecondary },

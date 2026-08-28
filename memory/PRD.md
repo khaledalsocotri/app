@@ -61,8 +61,13 @@ admin-ready so a future web dashboard can manage all content. React Native + Exp
 - **Backend**: added `categories` (destination_categories) + `product_categories` to the generic `/api/admin/{entity}` CRUD; expanded `/api/admin/stats` (users, destinations, trips, products, experiences, bookings, offers, events, services, orders). All admin routes `is_admin`-gated.
 - Verified: **72/72 backend tests** + all admin dashboard frontend flows (login gate, access-denied for non-admins, full CRUD round-trip to DB → mobile, categories usable in place form, mobile-width layout). Admin: admin@socotra.app / Admin@123.
 
+## Map engine — MapLibre + Esri satellite (2026-06)
+- **Root cause of the blank map fixed**: native maps used `PROVIDER_GOOGLE` with **empty** Google API keys → blank on Android/iOS. Per user choice, replaced Google Maps with **MapLibre (`@maplibre/maplibre-react-native` v11) + free Esri World Imagery satellite tiles** — no API key/token, no billing.
+- Helpers: `src/components/mapStyle.ts` (satellite/hybrid/streets style + Socotra center/zoom), `MapPin.tsx` (teardrop category pins), `MapFallback.tsx` (+`isExpoGo`). `MapCanvas.tsx` + `DiscoverMap.tsx` rewritten to MapLibre (satellite/hybrid, teardrop pins with admin `marker_icon`, user-location dot).
+- Map tab adds right-side floating controls (compass/recenter, layers=cycle map type, locate-me fly-to, download=coming-soon), dynamic category chips, and a bottom **"استكشف هذه المنطقة"** places sheet.
+- **Expo Go/web note**: MapLibre renders only in a dev/prod build; Expo Go + web show a branded `MapFallback` (no crash). Verified web bundles clean + lint clean; native map validated after Publish → build.
+
 ## Backlog / Remaining
-- P1: Real payment gateway (Stripe/Razorpay) — modular hook present (payment_status=unpaid on orders & bookings).
 - P2: Standalone web admin dashboard (current admin runs in-app on web + mobile for admin users).
 - P2: Google Maps API key wiring for production builds (app.json config placeholders in place).
 - P2: Push notifications (Emergent-managed) — requires deploy + build.

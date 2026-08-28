@@ -599,6 +599,161 @@ class TestDestinationRichContent:
             api.delete(f"{base_url}/admin/destinations/{new_id}", headers=admin_headers)
 
 
+# --------------------------- Admin Dashboard (categories + expanded stats) ---------------------------
+class TestAdminDashboardCategories:
+    """Verify NEW admin CRUD for destination categories + product_categories, expanded stats,
+    and destination create with images[] array + lat/lng round-tripping into /api/destinations."""
+
+    def test_admin_stats_has_new_keys(self, api, base_url, admin_headers):
+        r = api.get(f"{base_url}/admin/stats", headers=admin_headers)
+        assert r.status_code == 200, r.text
+        data = r.json()
+        for k in ["users", "destinations", "trips", "products", "experiences", "bookings",
+                  "offers", "events", "services", "orders"]:
+            assert k in data, f"missing stats key {k}"
+            assert isinstance(data[k], int)
+
+    def test_admin_stats_non_admin_403(self, api, base_url, auth_headers):
+        r = api.get(f"{base_url}/admin/stats", headers=auth_headers)
+        assert r.status_code == 403
+
+    def test_admin_categories_crud_and_public_reflection(self, api, base_url, admin_headers):
+        payload = {
+            "key": f"TEST_cat_{uuid.uuid4().hex[:6]}",
+            "name_ar": "TEST فئة",
+            "name_en": "TEST Category",
+            "icon": "leaf",
+            "color": "#158C9B",
+            "order": 999,
+        }
+        r = api.post(f"{base_url}/admin/categories", json=payload, headers=admin_headers)
+        assert r.status_code == 200, r.text
+        new_id = r.json()["id"]
+        try:
+            # Public /api/categories reflects
+            pub = api.get(f"{base_url}/categories").json()
+            found = next((c for c in pub if c.get("key") == payload["key"]), None)
+            assert found is not None, "new category not visible in GET /api/categories"
+            assert found["name_ar"] == payload["name_ar"]
+            assert found["name_en"] == payload["name_en"]
+            assert found["icon"] == payload["icon"]
+
+            # PUT update
+            ru = api.put(f"{base_url}/admin/categories/{new_id}",
+                         json={"name_en": "TEST Category Updated", "color": "#111111"},
+                         headers=admin_headers)
+            assert ru.status_code == 200
+            assert ru.json()["name_en"] == "TEST Category Updated"
+            pub2 = api.get(f"{base_url}/categories").json()
+            updated = next((c for c in pub2 if c.get("key") == payload["key"]), None)
+            assert updated is not None and updated["name_en"] == "TEST Category Updated"
+            assert updated["color"] == "#111111"
+        finally:
+            rd = api.delete(f"{base_url}/admin/categories/{new_id}", headers=admin_headers)
+            assert rd.status_code == 200
+            pub3 = api.get(f"{base_url}/categories").json()
+            assert not any(c.get("key") == payload["key"] for c in pub3), "deleted category still listed"
+
+    def test_admin_categories_non_admin_403(self, api, base_url, auth_headers):
+        r = api.post(f"{base_url}/admin/categories", json={"key": "x", "name_ar": "y"}, headers=auth_headers)
+        assert r.status_code == 403
+        r2 = api.put(f"{base_url}/admin/categories/xxx", json={"a": 1}, headers=auth_headers)
+        assert r2.status_code == 403
+        r3 = api.delete(f"{base_url}/admin/categories/xxx", headers=auth_headers)
+        assert r3.status_code == 403
+
+    def test_admin_product_categories_crud_and_public_reflection(self, api, base_url, admin_headers):
+        payload = {
+            "key": f"TEST_pcat_{uuid.uuid4().hex[:6]}",
+            "name_ar": "TEST فئة متجر",
+            "name_en": "TEST Product Category",
+            "icon": "pricetag",
+            "order": 999,
+        }
+        r = api.post(f"{base_url}/admin/product_categories", json=payload, headers=admin_headers)
+        assert r.status_code == 200, r.text
+        new_id = r.json()["id"]
+        try:
+            pub = api.get(f"{base_url}/marketplace/categories").json()
+            found = next((c for c in pub if c.get("key") == payload["key"]), None)
+            assert found is not None, "new product_category not visible in GET /api/marketplace/categories"
+            assert found["name_ar"] == payload["name_ar"]
+
+            ru = api.put(f"{base_url}/admin/product_categories/{new_id}",
+                         json={"name_en": "TEST PC Updated"}, headers=admin_headers)
+            assert ru.status_code == 200
+            pub2 = api.get(f"{base_url}/marketplace/categories").json()
+            upd = next((c for c in pub2 if c.get("key") == payload["key"]), None)
+            assert upd is not None and upd["name_en"] == "TEST PC Updated"
+        finally:
+            rd = api.delete(f"{base_url}/admin/product_categories/{new_id}", headers=admin_headers)
+            assert rd.status_code == 200
+            pub3 = api.get(f"{base_url}/marketplace/categories").json()
+            assert not any(c.get("key") == payload["key"] for c in pub3)
+
+    def test_admin_product_categories_non_admin_403(self, api, base_url, auth_headers):
+        r = api.post(f"{base_url}/admin/product_categories", json={"key": "x", "name_ar": "y"}, headers=auth_headers)
+        assert r.status_code == 403
+        r2 = api.put(f"{base_url}/admin/product_categories/xxx", json={"a": 1}, headers=auth_headers)
+        assert r2.status_code == 403
+        r3 = api.delete(f"{base_url}/admin/product_categories/xxx", headers=auth_headers)
+        assert r3.status_code == 403
+
+    def test_admin_create_destination_with_images_array_and_coords_visible_in_public(
+        self, api, base_url, admin_headers
+    ):
+        payload = {
+            "name_ar": "TEST مكان صور",
+            "name_en": "TEST Multi Image Place",
+            "category": "nature",
+            "cover_image": "https://example.com/first.jpg",
+            "images": [
+                "https://example.com/first.jpg",
+                "https://example.com/second.jpg",
+                "https://example.com/third.jpg",
+            ],
+            "location_ar": "TEST location",
+            "latitude": 12.5,
+            "longitude": 54.0,
+            "rating": 4.7,
+            "marker_icon": "leaf",
+        }
+        r = api.post(f"{base_url}/admin/destinations", json=payload, headers=admin_headers)
+        assert r.status_code == 200, r.text
+        new_id = r.json()["id"]
+        try:
+            # GET public list must reflect images[] and coordinates (mobile map depends on this)
+            listed = api.get(f"{base_url}/destinations").json()
+            hit = next((d for d in listed if d["id"] == new_id), None)
+            assert hit is not None, "new destination not in public /api/destinations"
+            assert hit.get("images") == payload["images"], f"images not persisted: {hit.get('images')}"
+            assert hit.get("cover_image") == payload["cover_image"]
+            assert hit.get("latitude") == payload["latitude"]
+            assert hit.get("longitude") == payload["longitude"]
+            # Detail also has same array
+            det = api.get(f"{base_url}/destinations/{new_id}").json()
+            assert det.get("images") == payload["images"]
+            assert det.get("latitude") == payload["latitude"]
+            assert det.get("longitude") == payload["longitude"]
+
+            # Edit images list and coords
+            upd = {
+                "images": ["https://example.com/only.jpg"],
+                "cover_image": "https://example.com/only.jpg",
+                "latitude": 13.0,
+                "longitude": 55.0,
+            }
+            ru = api.put(f"{base_url}/admin/destinations/{new_id}", json=upd, headers=admin_headers)
+            assert ru.status_code == 200
+            after = api.get(f"{base_url}/destinations/{new_id}").json()
+            assert after.get("images") == upd["images"]
+            assert after.get("cover_image") == upd["cover_image"]
+            assert after.get("latitude") == 13.0
+            assert after.get("longitude") == 55.0
+        finally:
+            api.delete(f"{base_url}/admin/destinations/{new_id}", headers=admin_headers)
+
+
 # --------------------------- Host Reply (Reviews) ---------------------------
 class TestHostReply:
     def test_reply_requires_admin(self, api, base_url, auth_headers):

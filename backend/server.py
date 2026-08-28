@@ -628,6 +628,10 @@ async def admin_stats(user: dict = Depends(get_current_user)):
         "products": await db.products.count_documents({}),
         "experiences": await db.experiences.count_documents({}),
         "bookings": await db.bookings.count_documents({}),
+        "offers": await db.offers.count_documents({}),
+        "events": await db.events.count_documents({}),
+        "services": await db.services.count_documents({}),
+        "orders": await db.orders.count_documents({}),
     }
 
 
@@ -714,6 +718,8 @@ _ADMIN_COLLS = {
     "experiences": db.experiences,
     "services": db.services,
     "events": db.events,
+    "categories": db.destination_categories,
+    "product_categories": db.product_categories,
 }
 
 

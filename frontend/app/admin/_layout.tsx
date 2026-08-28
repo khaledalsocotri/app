@@ -1,21 +1,13 @@
-import { Stack, Redirect } from "expo-router";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
-import { useAuth } from "@/src/context/AuthContext";
-import { COLORS } from "@/src/theme/theme";
+import { Slot } from "expo-router";
+import AdminShell from "@/src/admin/AdminShell";
 
+// The Web Admin Dashboard shell wraps every /admin route with a secure gate
+// (admin-only) and the sidebar/topbar navigation. It shares the same backend
+// and database as the mobile app.
 export default function AdminLayout() {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.brandPrimary} />
-      </View>
-    );
-  }
-  if (!user || !user.is_admin) return <Redirect href="/(tabs)/account" />;
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <AdminShell>
+      <Slot />
+    </AdminShell>
+  );
 }
-
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: COLORS.surface },
-});

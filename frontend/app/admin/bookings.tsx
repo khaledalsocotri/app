@@ -2,8 +2,7 @@ import React, { useState, useCallback } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE, SHADOW } from "@/src/theme/theme";
 import { apiFetch } from "@/src/api/client";
 import { LoadingState, EmptyState } from "@/src/components/States";
@@ -13,17 +12,11 @@ const STATUS_AR: Record<string, string> = { pending: "قيد المراجعة", 
 const STATUS_COLOR: Record<string, string> = { pending: COLORS.warning, confirmed: COLORS.success, cancelled: COLORS.error };
 
 export default function AdminBookings() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
   const toast = useToast();
   const [bookings, setBookings] = useState<any[] | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      setBookings(await apiFetch("/admin/bookings"));
-    } catch {
-      setBookings([]);
-    }
+    try { setBookings(await apiFetch("/admin/bookings")); } catch { setBookings([]); }
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -40,13 +33,10 @@ export default function AdminBookings() {
 
   return (
     <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} testID="admin-bookings-back">
-          <Ionicons name="chevron-forward" size={24} color={COLORS.onSurface} />
-        </Pressable>
-        <Text style={styles.title}>إدارة الحجوزات</Text>
+      <View style={styles.pageHead}>
+        <Text style={styles.pageTitle}>الحجوزات</Text>
+        <Text style={styles.pageSub}>{bookings ? `${bookings.length} حجز` : "..."}</Text>
       </View>
-
       {bookings === null ? (
         <LoadingState />
       ) : (
@@ -91,9 +81,9 @@ export default function AdminBookings() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.surfaceSecondary },
-  header: { flexDirection: "row", alignItems: "center", gap: SPACING.md, paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md, backgroundColor: COLORS.surface },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.surfaceSecondary, alignItems: "center", justifyContent: "center" },
-  title: { fontFamily: FONT.displayBold, fontSize: FSIZE.xl, color: COLORS.onSurface },
+  pageHead: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg },
+  pageTitle: { fontFamily: FONT.displayBold, fontSize: FSIZE.xxl, color: COLORS.onSurface, textAlign: "right" },
+  pageSub: { fontFamily: FONT.body, fontSize: FSIZE.sm, color: COLORS.onSurfaceSecondary, textAlign: "right" },
   card: { backgroundColor: COLORS.surface, borderRadius: RADIUS.md, padding: SPACING.md },
   row: { flexDirection: "row", gap: SPACING.md },
   img: { width: 64, height: 64, borderRadius: RADIUS.sm, backgroundColor: COLORS.surfaceSecondary },

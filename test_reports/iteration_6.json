@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 6 (Web Admin Dashboard — full CRUD + gate + mobile-vs-admin separation). Backend 72/72 pytest pass (added TestAdminDashboardCategories with 7 new tests). Verified: (a) POST/PUT/DELETE /api/admin/categories and /api/admin/product_categories persist and GET /api/categories + GET /api/marketplace/categories reflect create/update/delete round-trips. (b) Non-admin visitor gets 403 on all admin/categories + admin/product_categories + admin/stats endpoints. (c) /api/admin/stats returns all 10 counts (users, destinations, trips, products, experiences, bookings, offers, events, services, orders). (d) POST /api/admin/destinations with images[] array + cover_image + latitude/longitude persists exactly and appears in GET /api/destinations (list + detail); edit and delete round-trip. Frontend web-desktop (1280x860): (1) /admin without auth shows AdminLogin gate (admin-login-email/password/submit). (2) Logging in as visitor@socotra.app → Access Denied screen with denied-logout (NOT the dashboard). (3) Logging in as admin@socotra.app → dashboard with 10 live stat cards (stat-destinations=12, trips=3, experiences=7, products=8, offers=2, events=3, services=4, bookings=28, orders=8, users=10) and sidebar with all 11 nav testIDs (nav-home, nav-places, nav-trips, nav-experiences, nav-products, nav-offers, nav-events, nav-services, nav-categories, nav-product-categories, nav-bookings). (4) /admin/places shows the 12 seeded destinations with thumbnails; entity-add opened the modal form and I created a new place (name_ar/name_en, category=nature via field-category → opt-nature, location_ar, image via image-url-input+add-image-url, lat=12.5 / lng=54, marker_icon=leaf); after entity-save the row appeared in the list AND was persisted in GET /api/destinations with images:['https://example.com/test.jpg'], cover_image auto-set to images[0], latitude=12.5, longitude=54, marker_icon='leaf'. (5) edit-<id> opened the edit form, changed name_en→'TEST Edited Name', entity-save persisted (verified via GET /api/destinations/<id>). (6) delete-<id> removed it (verified missing in GET /api/destinations). (7) /admin/categories entity-add: created new category (key=test_playwright_cat, name_ar/en, icon-leaf, color, order=999) — verified visible in GET /api/categories AND selectable as opt-test_playwright_cat in the places form field-category. (8) Mobile viewport 390x844: top bar (admin-logout) + horizontally scrollable nav (nav-places visible) both render correctly. No red-screens, no admin_login flow errors. Pre-existing non-blocking RN-Web warnings (shadow* / props.pointerEvents) unchanged from iteration 5.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "global", "issues": ["Pre-existing RN-Web deprecation warnings (shadow* → boxShadow, props.pointerEvents → style.pointerEvents). Non-blocking, same as iteration 5. Anonymous /api/auth/me 401 fires once before login (expected — no token yet)."]}
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_backend.py",
+    "/app/backend/tests/conftest.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "None blocking. Web Admin Dashboard is fully functional end-to-end (secure gate, non-admin denial, sidebar+stats, full CRUD for places, edit, delete, categories CRUD reflected in place-form select, mobile-narrow layout).",
+    "Optional (nice-to-have): add a confirmation dialog for delete-<id> — currently one tap deletes silently. Not a bug per spec, just UX polish."
+  ],
+  "critical_code_review_comments": [
+    "Backend: adding 'categories'→db.destination_categories and 'product_categories'→db.product_categories to _ADMIN_COLLS cleanly reuses the generic /api/admin/{entity} CRUD; no schema changes needed. Public GET /api/categories and /api/marketplace/categories both exclude _id, so no ObjectId leaks.",
+    "Backend: /api/admin/stats now returns 10 counts including offers/events/services/orders — matches the stat cards on the dashboard.",
+    "Frontend: AdminShell has clean three-way branching (loading → login → access denied → dashboard) tied to useAuth().user + user.is_admin. Non-admin users cannot see the sidebar/nav at all.",
+    "Frontend: EntityScreen consistently emits testIDs entity-add / entity-search / entity-save / row-<id> / edit-<id> / delete-<id> / field-<k> / opt-<value> / icon-<name>, and MultiImageField emits image-url-input / add-image-url / image-<i> / make-cover-<i> / del-image-<i>. This is what enabled the full playwright walkthrough.",
+    "Frontend: Save path in EntityScreen (via MultiImageField) auto-syncs cover_image=images[0], confirmed by backend response showing cover_image mirrored to the first image when only 'images' was provided in the form."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_backend.py (added TestAdminDashboardCategories with 7 tests: admin_stats keys, stats non-admin 403, categories CRUD + public reflect, categories non-admin 403, product_categories CRUD + public reflect, product_categories non-admin 403, destination with images[]+coords public reflect)"
+  ],
+  "success_rate": { "backend": "100% (72/72)", "frontend": "100% of the 8 requested flows verified — /admin login gate, non-admin access-denied, admin dashboard with 10 stat cards + 11 sidebar nav testIDs, /admin/places create with all fields + images URL + lat/lng, backend persistence via GET /api/destinations, edit-<id> persistence, delete-<id> removal, categories CRUD reflected in places form select, mobile 390x844 layout" },
+  "seed_data_creation": "None permanent. Playwright test created one destination and one category via UI; the destination was deleted through the UI delete-<id> button and the category was deleted via curl to /api/admin/categories after the run to leave the DB clean. Pytest suite uses TEST_-prefixed data and cleans in finally blocks.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Web Admin Dashboard lives under /admin/* and is wrapped by AdminShell (src/admin/AdminShell.tsx) which gates on useAuth().user.is_admin. Non-admin users see 'AccessDenied' with testID='denied-logout'. Backend generic CRUD /api/admin/{entity} now covers: destinations, trips, offers, products, experiences, services, events, categories (destination_categories), product_categories. GET /api/admin/stats returns 10 count keys. When creating a destination through the UI, cover_image is auto-set to images[0] on save. Non-admin visitor account: visitor@socotra.app / Visit@123. Nav-product-categories route is /admin/product-categories (hyphen), testID is nav-product-categories.",
+  "rca_of_issue": "N/A — no regressions surfaced."
+}

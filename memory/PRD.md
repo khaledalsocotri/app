@@ -53,6 +53,15 @@ admin-ready so a future web dashboard can manage all content. React Native + Exp
 - Verified: 62/62 backend tests passing; all frontend flows verified (iterations 1–5). Real secure admin: admin@socotra.app / Admin@123.
 
 ## Backlog / Remaining
+
+## Web Admin Dashboard (2026-06)
+- **Dedicated, admin-only Web Admin Dashboard built inside the same project**, sharing the SAME FastAPI backend + MongoDB as the mobile app (content managed here appears instantly in the app). Secure gate (`src/admin/AdminShell.tsx`): logged-out users see an **Admin Login**, non-admins see **Access Denied**, admins get the dashboard. Desktop layout = fixed RTL sidebar + data rows + form modals; responsive top-bar nav on mobile widths.
+- **Sections**: Dashboard (10 live stats), Places (destinations, with map coordinates + rich fields + **multi-photo gallery**: add/upload/replace/delete, first = cover), Trips, Experiences, Products (prices), Offers/Ads, Events, Services, **Place Categories** & **Store Categories** (full CRUD), Bookings (confirm/cancel).
+- Generic, config-driven `EntityScreen` (`src/admin/entities.ts`) → search, create/edit modal, category `select`, icon picker, list fields, and a **delete confirmation dialog**. `MultiImageField` handles galleries.
+- **Backend**: added `categories` (destination_categories) + `product_categories` to the generic `/api/admin/{entity}` CRUD; expanded `/api/admin/stats` (users, destinations, trips, products, experiences, bookings, offers, events, services, orders). All admin routes `is_admin`-gated.
+- Verified: **72/72 backend tests** + all admin dashboard frontend flows (login gate, access-denied for non-admins, full CRUD round-trip to DB → mobile, categories usable in place form, mobile-width layout). Admin: admin@socotra.app / Admin@123.
+
+## Backlog / Remaining
 - P1: Real payment gateway (Stripe/Razorpay) — modular hook present (payment_status=unpaid on orders & bookings).
 - P2: Standalone web admin dashboard (current admin runs in-app on web + mobile for admin users).
 - P2: Google Maps API key wiring for production builds (app.json config placeholders in place).

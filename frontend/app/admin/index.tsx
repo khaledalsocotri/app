@@ -1,85 +1,82 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, RADIUS, FONT, FSIZE, SHADOW } from "@/src/theme/theme";
 import { useFetch } from "@/src/hooks/useFetch";
 
-const STAT_META: Record<string, { label: string; icon: string; color: string }> = {
-  users: { label: "المستخدمون", icon: "people", color: "#4A6E8C" },
-  destinations: { label: "الوجهات", icon: "location", color: "#158C9B" },
-  trips: { label: "الرحلات", icon: "airplane", color: "#0F6B76" },
-  products: { label: "المنتجات", icon: "cube", color: "#C39158" },
-  experiences: { label: "التجارب", icon: "sparkles", color: "#2D7A5D" },
-  bookings: { label: "الحجوزات", icon: "receipt", color: "#B87F28" },
-};
+const STAT_META: { key: string; label: string; icon: string; color: string; route?: string }[] = [
+  { key: "destinations", label: "الأماكن", icon: "location", color: "#158C9B", route: "/admin/places" },
+  { key: "trips", label: "الرحلات", icon: "airplane", color: "#0F6B76", route: "/admin/trips" },
+  { key: "experiences", label: "التجارب", icon: "sparkles", color: "#2D7A5D", route: "/admin/experiences" },
+  { key: "products", label: "المنتجات", icon: "cube", color: "#C39158", route: "/admin/products" },
+  { key: "offers", label: "العروض", icon: "pricetag", color: "#B87F28", route: "/admin/offers" },
+  { key: "events", label: "الفعاليات", icon: "calendar", color: "#4A6E8C", route: "/admin/events" },
+  { key: "services", label: "الخدمات", icon: "construct", color: "#38484A", route: "/admin/services" },
+  { key: "bookings", label: "الحجوزات", icon: "receipt", color: "#0F6B76", route: "/admin/bookings" },
+  { key: "orders", label: "الطلبات", icon: "bag-handle", color: "#C39158" },
+  { key: "users", label: "المستخدمون", icon: "people", color: "#4A6E8C" },
+];
+
+const QUICK: { label: string; sub: string; icon: string; color: string; route: string }[] = [
+  { label: "إضافة مكان", sub: "أضف وجهة جديدة على الخريطة", icon: "add-circle", color: "#158C9B", route: "/admin/places" },
+  { label: "إدارة المتجر", sub: "المنتجات والأسعار", icon: "cube", color: "#C39158", route: "/admin/products" },
+  { label: "العروض والإعلانات", sub: "أنشئ عرضاً ترويجياً", icon: "pricetag", color: "#B87F28", route: "/admin/offers" },
+  { label: "الفئات", sub: "نظّم تصنيفات المحتوى", icon: "grid", color: "#0F6B76", route: "/admin/categories" },
+];
 
 export default function AdminDashboard() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const { data: stats } = useFetch<any>("/admin/stats");
+  const cols = width >= 1100 ? 5 : width >= 760 ? 4 : width >= 480 ? 3 : 2;
+  const cardW = `${100 / cols - 2}%` as any;
 
   return (
-    <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} testID="admin-back">
-          <Ionicons name="chevron-forward" size={24} color={COLORS.onSurface} />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>لوحة الإدارة</Text>
-          <Text style={styles.sub}>إدارة محتوى وحجوزات سقطرى</Text>
-        </View>
+    <ScrollView style={styles.root} contentContainerStyle={{ padding: SPACING.lg, paddingBottom: SPACING.xxl }} showsVerticalScrollIndicator={false}>
+      <Text style={styles.title}>لوحة التحكم</Text>
+      <Text style={styles.sub}>نظرة عامة على محتوى تطبيق سقطرى</Text>
+
+      <View style={styles.grid}>
+        {STAT_META.map((m) => (
+          <Pressable key={m.key} style={[styles.statCard, { width: cardW }, SHADOW.soft]} onPress={() => m.route && router.push(m.route as any)} testID={`stat-${m.key}`}>
+            <View style={[styles.statIcon, { backgroundColor: m.color }]}><Ionicons name={m.icon as any} size={20} color="#fff" /></View>
+            <Text style={styles.statNum}>{stats?.[m.key] ?? "—"}</Text>
+            <Text style={styles.statLabel}>{m.label}</Text>
+          </Pressable>
+        ))}
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: SPACING.lg, paddingBottom: SPACING.xxl }} showsVerticalScrollIndicator={false}>
-        <View style={styles.grid}>
-          {Object.entries(STAT_META).map(([key, m]) => (
-            <View key={key} style={[styles.statCard, SHADOW.soft]} testID={`stat-${key}`}>
-              <View style={[styles.statIcon, { backgroundColor: m.color }]}>
-                <Ionicons name={m.icon as any} size={20} color="#fff" />
-              </View>
-              <Text style={styles.statNum}>{stats?.[key] ?? "—"}</Text>
-              <Text style={styles.statLabel}>{m.label}</Text>
+      <Text style={styles.sectionTitle}>إجراءات سريعة</Text>
+      <View style={styles.quickGrid}>
+        {QUICK.map((q) => (
+          <Pressable key={q.route} style={[styles.quickCard, { width: width >= 760 ? "48%" : "100%" }, SHADOW.soft]} onPress={() => router.push(q.route as any)} testID={`quick-${q.route.split("/").pop()}`}>
+            <View style={[styles.quickIcon, { backgroundColor: q.color }]}><Ionicons name={q.icon as any} size={22} color="#fff" /></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.quickLabel}>{q.label}</Text>
+              <Text style={styles.quickSub}>{q.sub}</Text>
             </View>
-          ))}
-        </View>
-
-        <Pressable style={[styles.action, SHADOW.soft]} onPress={() => router.push("/admin/bookings")} testID="admin-manage-bookings">
-          <View style={[styles.actionIcon, { backgroundColor: COLORS.brand }]}><Ionicons name="receipt-outline" size={22} color="#fff" /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.actionTitle}>إدارة الحجوزات</Text>
-            <Text style={styles.actionSub}>تأكيد أو إلغاء طلبات الحجز</Text>
-          </View>
-          <Ionicons name="chevron-back" size={22} color={COLORS.borderStrong} />
-        </Pressable>
-
-        <Pressable style={[styles.action, SHADOW.soft]} onPress={() => router.push("/admin/content")} testID="admin-manage-content">
-          <View style={[styles.actionIcon, { backgroundColor: COLORS.brandSecondary }]}><Ionicons name="create-outline" size={22} color="#fff" /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.actionTitle}>إدارة المحتوى</Text>
-            <Text style={styles.actionSub}>الوجهات، الرحلات، المنتجات، التجارب والعروض</Text>
-          </View>
-          <Ionicons name="chevron-back" size={22} color={COLORS.borderStrong} />
-        </Pressable>
-      </ScrollView>
-    </View>
+            <Ionicons name="chevron-back" size={20} color={COLORS.borderStrong} />
+          </Pressable>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.surfaceSecondary },
-  header: { flexDirection: "row", alignItems: "center", gap: SPACING.md, paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md, backgroundColor: COLORS.surface },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.surfaceSecondary, alignItems: "center", justifyContent: "center" },
-  title: { fontFamily: FONT.displayBold, fontSize: FSIZE.xxl, color: COLORS.onSurface, textAlign: "right" },
-  sub: { fontFamily: FONT.body, fontSize: FSIZE.sm, color: COLORS.onSurfaceSecondary, textAlign: "right" },
-  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: SPACING.md },
-  statCard: { width: "31%", backgroundColor: COLORS.surface, borderRadius: RADIUS.md, padding: SPACING.md, alignItems: "flex-end", gap: 4, marginBottom: SPACING.md },
+  title: { fontFamily: FONT.displayBold, fontSize: FSIZE.xxxl, color: COLORS.onSurface, textAlign: "right", marginTop: SPACING.sm },
+  sub: { fontFamily: FONT.body, fontSize: FSIZE.base, color: COLORS.onSurfaceSecondary, textAlign: "right", marginBottom: SPACING.lg },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.md, justifyContent: "flex-start" },
+  statCard: { backgroundColor: COLORS.surface, borderRadius: RADIUS.md, padding: SPACING.md, alignItems: "flex-end", gap: 4 },
   statIcon: { width: 40, height: 40, borderRadius: RADIUS.md, alignItems: "center", justifyContent: "center" },
   statNum: { fontFamily: FONT.displayBold, fontSize: FSIZE.xxl, color: COLORS.onSurface },
   statLabel: { fontFamily: FONT.body, fontSize: FSIZE.sm, color: COLORS.onSurfaceSecondary },
-  action: { flexDirection: "row", alignItems: "center", gap: SPACING.md, backgroundColor: COLORS.surface, borderRadius: RADIUS.md, padding: SPACING.lg, marginTop: SPACING.md },
-  actionIcon: { width: 48, height: 48, borderRadius: RADIUS.md, alignItems: "center", justifyContent: "center" },
-  actionTitle: { fontFamily: FONT.bold, fontSize: FSIZE.lg, color: COLORS.onSurface, textAlign: "right" },
-  actionSub: { fontFamily: FONT.body, fontSize: FSIZE.sm, color: COLORS.onSurfaceSecondary, textAlign: "right" },
+  sectionTitle: { fontFamily: FONT.displayBold, fontSize: FSIZE.xl, color: COLORS.onSurface, textAlign: "right", marginTop: SPACING.xl, marginBottom: SPACING.md },
+  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.md },
+  quickCard: { flexDirection: "row", alignItems: "center", gap: SPACING.md, backgroundColor: COLORS.surface, borderRadius: RADIUS.md, padding: SPACING.lg },
+  quickIcon: { width: 48, height: 48, borderRadius: RADIUS.md, alignItems: "center", justifyContent: "center" },
+  quickLabel: { fontFamily: FONT.bold, fontSize: FSIZE.lg, color: COLORS.onSurface, textAlign: "right" },
+  quickSub: { fontFamily: FONT.body, fontSize: FSIZE.sm, color: COLORS.onSurfaceSecondary, textAlign: "right" },
 });

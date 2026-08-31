@@ -21,17 +21,20 @@ node_modules/
 
 # Next.js
 /.next/
-/out/
+/out
 next-env.d.ts
 *.tsbuildinfo
 
 # Production builds
 /build
 dist/
-dist
 
-# Environment files (comprehensive coverage)
+# Environment files — never commit secrets
+.env
+.env.*
+!.env.example
 
+# Credentials and tokens
 *token.json*
 *credentials.json*
 
@@ -48,7 +51,7 @@ dump.rdb
 
 # Python
 __pycache__/
-*pyc*
+*.py[cod]
 venv/
 .venv/
 

@@ -16,14 +16,15 @@ import { CategoryChips } from "@/src/components/CategoryChips";
 import { FavoriteButton } from "@/src/components/FavoriteButton";
 import { Stars } from "@/src/components/Stars";
 import { LoadingState, ErrorState } from "@/src/components/States";
+import { SocotraLogo } from "@/src/components/SocotraLogo";
 
 const TABBAR = 92;
 
 const QUICK = [
-  { key: "marketplace", tkey: "q_marketplace", icon: "storefront", color: "#C39158", route: "/marketplace" },
-  { key: "experiences", tkey: "q_experiences", icon: "sparkles", color: "#0F6B76", route: "/experiences" },
-  { key: "map", tkey: "q_map", icon: "map", color: "#158C9B", route: "/(tabs)/map" },
-  { key: "services", tkey: "q_services", icon: "construct", color: "#4A6E8C", route: "/services" },
+  { key: "marketplace", tkey: "q_marketplace", icon: "storefront", color: COLORS.brandSecondary, route: "/marketplace" },
+  { key: "experiences", tkey: "q_experiences", icon: "sparkles", color: COLORS.brandPrimary, route: "/experiences" },
+  { key: "map", tkey: "q_map", icon: "map", color: COLORS.sage, route: "/(tabs)/map" },
+  { key: "services", tkey: "q_services", icon: "construct", color: COLORS.gold, route: "/services" },
 ];
 
 export default function Discover() {
@@ -48,24 +49,24 @@ export default function Discover() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top + SPACING.sm, paddingBottom: TABBAR + SPACING.xl }}
       >
-        {/* Header */}
         <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hi}>{t("hello")} {user?.name?.split(" ")[0] || ""} 👋</Text>
-            <Text style={styles.headTitle}>{t("discover_socotra")}</Text>
+          <View style={styles.brandBlock}>
+            <SocotraLogo size={38} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.hi}>{t("hello")} {user?.name?.split(" ")[0] || ""} 👋</Text>
+              <Text style={styles.headTitle}>{t("discover_socotra")}</Text>
+            </View>
           </View>
           <Pressable style={styles.bell} onPress={() => router.push("/(tabs)/account")} testID="header-avatar">
             <Ionicons name="notifications-outline" size={22} color={COLORS.onSurface} />
           </Pressable>
         </View>
 
-        {/* Search */}
         <Pressable style={styles.search} onPress={() => router.push("/search")} testID="discover-search">
           <Ionicons name="search" size={20} color={COLORS.onSurfaceSecondary} />
           <Text style={styles.searchTxt}>{t("search_placeholder")}</Text>
         </Pressable>
 
-        {/* Large interactive Socotra map */}
         <DiscoverMap destinations={allDest || []} colorMap={colorMap} />
 
         {loading ? (
@@ -74,7 +75,6 @@ export default function Discover() {
           <ErrorState message={error} onRetry={reload} />
         ) : (
           <>
-            {/* Featured hero carousel */}
             <ScrollView
               horizontal
               pagingEnabled
@@ -92,7 +92,7 @@ export default function Discover() {
                   testID={`hero-${item.id}`}
                 >
                   <Image source={item.cover_image} style={StyleSheet.absoluteFill as any} contentFit="cover" transition={250} />
-                  <LinearGradient colors={["transparent", "rgba(10,35,38,0.9)"]} style={styles.heroScrim} />
+                  <LinearGradient colors={["transparent", "rgba(16,59,46,0.92)"]} style={styles.heroScrim} />
                   <View style={styles.heroFav}><FavoriteButton type="destination" id={item.id} /></View>
                   <View style={styles.featBadge}>
                     <Ionicons name="star" size={12} color="#fff" />
@@ -113,7 +113,6 @@ export default function Discover() {
               ))}
             </ScrollView>
 
-            {/* Quick access */}
             <View style={styles.quickRow}>
               {QUICK.map((q) => (
                 <Pressable key={q.key} style={styles.quick} onPress={() => router.push(q.route as any)} testID={`quick-${q.key}`}>
@@ -162,8 +161,6 @@ export default function Discover() {
                 </Rail>
               </Section>
             )}
-
-            
           </>
         )}
       </ScrollView>
@@ -174,12 +171,12 @@ export default function Discover() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.surface },
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: SPACING.lg },
+  brandBlock: { flex: 1, flexDirection: "row", alignItems: "center", gap: SPACING.sm },
   hi: { fontFamily: FONT.body, fontSize: FSIZE.base, color: COLORS.onSurfaceSecondary, textAlign: "right" },
   headTitle: { fontFamily: FONT.displayBold, fontSize: FSIZE.xxl, color: COLORS.onSurface, textAlign: "right" },
   bell: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.surfaceSecondary, alignItems: "center", justifyContent: "center" },
   search: { flexDirection: "row", alignItems: "center", gap: SPACING.sm, marginHorizontal: SPACING.lg, marginTop: SPACING.lg, backgroundColor: COLORS.surfaceSecondary, borderRadius: RADIUS.md, paddingHorizontal: SPACING.lg, height: 50 },
   searchTxt: { fontFamily: FONT.body, fontSize: FSIZE.base, color: COLORS.onSurfaceSecondary },
-
   heroRail: { paddingHorizontal: SPACING.lg, gap: SPACING.md },
   hero: { height: 230, borderRadius: RADIUS.lg, overflow: "hidden", backgroundColor: COLORS.surfaceSecondary },
   heroScrim: { position: "absolute", left: 0, right: 0, bottom: 0, height: 150 },
@@ -192,11 +189,9 @@ const styles = StyleSheet.create({
   heroTitle: { fontFamily: FONT.displayBold, color: "#fff", fontSize: FSIZE.xxl },
   heroMeta: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
   heroMetaTxt: { fontFamily: FONT.body, color: "rgba(255,255,255,0.85)", fontSize: FSIZE.sm },
-
   quickRow: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: SPACING.lg, marginTop: SPACING.xl },
   quick: { alignItems: "center", gap: SPACING.sm, flex: 1 },
   quickIcon: { width: 58, height: 58, borderRadius: RADIUS.lg, alignItems: "center", justifyContent: "center", ...SHADOW.soft },
   quickLabel: { fontFamily: FONT.medium, fontSize: FSIZE.sm, color: COLORS.onSurface },
-
   trips: { paddingHorizontal: SPACING.lg, gap: SPACING.lg },
 });

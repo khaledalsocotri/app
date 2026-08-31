@@ -1,29 +1,35 @@
-// Socotra Explorer design system — sourced from design_guidelines.json
+// Socotra Explorer design system — Socotran nature palette
+// Forest, sand, dragon-blood red and warm gold are used consistently across the app.
 export const COLORS = {
-  surface: "#FFFFFF",
-  onSurface: "#111A1B",
-  surfaceSecondary: "#F4F7F7",
-  onSurfaceSecondary: "#38484A",
-  surfaceTertiary: "#E7EFEF",
-  onSurfaceTertiary: "#263638",
-  surfaceInverse: "#0A2326",
-  onSurfaceInverse: "#FFFFFF",
-  brand: "#0F6B76",
-  brandPrimary: "#158C9B",
+  surface: "#FFFDF8",
+  onSurface: "#17372D",
+  surfaceSecondary: "#F5EFE2",
+  onSurfaceSecondary: "#52635B",
+  surfaceTertiary: "#E8E0CF",
+  onSurfaceTertiary: "#30483E",
+  surfaceInverse: "#103B2E",
+  onSurfaceInverse: "#FFFDF8",
+  brand: "#103B2E",
+  brandPrimary: "#1B5A43",
   onBrandPrimary: "#FFFFFF",
-  brandSecondary: "#C39158",
+  brandSecondary: "#C85A3A",
   onBrandSecondary: "#FFFFFF",
-  brandTertiary: "#E2F1F3",
-  onBrandTertiary: "#0E4A52",
-  success: "#2D7A5D",
-  warning: "#B87F28",
-  error: "#B83A3A",
+  brandTertiary: "#E6EBD8",
+  onBrandTertiary: "#294632",
+  success: "#3F7657",
+  warning: "#B78332",
+  error: "#B84A3A",
   onError: "#FFFFFF",
-  info: "#4A6E8C",
-  border: "#E1E8E8",
-  borderStrong: "#B0C5C7",
-  divider: "#E8EEEE",
-  star: "#F0A92B",
+  info: "#567A75",
+  border: "#DED6C6",
+  borderStrong: "#B9AD98",
+  divider: "#E9E1D2",
+  star: "#D7A94B",
+  dragonBlood: "#C85A3A",
+  sand: "#F5EFE2",
+  sage: "#6B783B",
+  forest: "#103B2E",
+  gold: "#D7A94B",
 };
 
 export const SPACING = {
@@ -37,9 +43,9 @@ export const SPACING = {
 };
 
 export const RADIUS = {
-  sm: 6,
-  md: 12,
-  lg: 20,
+  sm: 8,
+  md: 14,
+  lg: 22,
   pill: 999,
 };
 
@@ -62,14 +68,14 @@ export const FSIZE = {
 
 export const SHADOW = {
   card: {
-    shadowColor: "#0A2326",
+    shadowColor: "#103B2E",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 14,
     elevation: 4,
   },
   soft: {
-    shadowColor: "#0A2326",
+    shadowColor: "#103B2E",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,

@@ -2,7 +2,12 @@
 // always appends /api. Injects the Bearer token from secure storage.
 import { storage } from "@/src/utils/storage";
 
-const BASE = process.env.EXPO_PUBLIC_BACKEND_URL;
+const rawBase = process.env.EXPO_PUBLIC_BACKEND_URL?.trim().replace(/\/$/, "");
+if (!rawBase) {
+  throw new Error("EXPO_PUBLIC_BACKEND_URL is not configured. Copy frontend/.env.example to your environment file and set the backend URL.");
+}
+
+const BASE = rawBase;
 export const API = `${BASE}/api`;
 export const TOKEN_KEY = "socotra_token";
 

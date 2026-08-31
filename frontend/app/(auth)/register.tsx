@@ -11,6 +11,10 @@ import { Button } from "@/src/components/Button";
 import { useAuth } from "@/src/context/AuthContext";
 import { useToast } from "@/src/components/Toast";
 
+const MAX_NAME_LENGTH = 100;
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 128;
+
 export default function Register() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -28,16 +32,18 @@ export default function Register() {
 
   const validate = () => {
     const e: any = {};
-    if (name.trim().length < 2) e.name = "الاسم مطلوب";
-    if (!/^\S+@\S+\.\S+$/.test(email)) e.email = "بريد إلكتروني غير صالح";
-    if (password.length < 6) e.password = "كلمة المرور 6 أحرف على الأقل";
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim();
+    if (normalizedName.length < 2 || normalizedName.length > MAX_NAME_LENGTH) e.name = `الاسم يجب أن يكون بين حرفين و${MAX_NAME_LENGTH} حرفاً`;
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail) || normalizedEmail.length > MAX_EMAIL_LENGTH) e.email = "بريد إلكتروني غير صالح";
+    if (password.length < 6 || password.length > MAX_PASSWORD_LENGTH) e.password = `كلمة المرور يجب أن تكون بين 6 و${MAX_PASSWORD_LENGTH} حرفاً`;
     if (confirm !== password) e.confirm = "كلمتا المرور غير متطابقتين";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const onRegister = async () => {
-    if (!validate()) return;
+    if (!validate() || loading) return;
     setLoading(true);
     try {
       await register(name.trim(), email.trim(), password);
@@ -64,10 +70,10 @@ export default function Register() {
       >
         <Text style={styles.lead}>انضم إلينا واكتشف كنوز سقطرى الطبيعية والثقافية</Text>
 
-        <TextField testID="register-name" label={t("full_name")} icon="person-outline" placeholder="اسمك" value={name} onChangeText={setName} error={errors.name} />
-        <TextField testID="register-email" label={t("email")} icon="mail-outline" placeholder="example@email.com" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} error={errors.email} />
-        <TextField testID="register-password" label={t("password")} icon="lock-closed-outline" placeholder="••••••••" secure value={password} onChangeText={setPassword} error={errors.password} />
-        <TextField testID="register-confirm" label="تأكيد كلمة المرور" icon="lock-closed-outline" placeholder="••••••••" secure value={confirm} onChangeText={setConfirm} error={errors.confirm} />
+        <TextField testID="register-name" label={t("full_name")} icon="person-outline" placeholder="اسمك" maxLength={MAX_NAME_LENGTH} value={name} onChangeText={setName} error={errors.name} />
+        <TextField testID="register-email" label={t("email")} icon="mail-outline" placeholder="example@email.com" autoCapitalize="none" keyboardType="email-address" maxLength={MAX_EMAIL_LENGTH} value={email} onChangeText={setEmail} error={errors.email} />
+        <TextField testID="register-password" label={t("password")} icon="lock-closed-outline" placeholder="••••••••" secure maxLength={MAX_PASSWORD_LENGTH} value={password} onChangeText={setPassword} error={errors.password} />
+        <TextField testID="register-confirm" label="تأكيد كلمة المرور" icon="lock-closed-outline" placeholder="••••••••" secure maxLength={MAX_PASSWORD_LENGTH} value={confirm} onChangeText={setConfirm} error={errors.confirm} />
 
         <Button testID="register-submit" title={t("create_account")} onPress={onRegister} loading={loading} style={{ marginTop: SPACING.sm }} />
 

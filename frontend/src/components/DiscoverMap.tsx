@@ -28,7 +28,7 @@ export function DiscoverMap({ destinations, colorMap }: any) {
             .map((d: any) => {
               const cfg = colorMap[d.category] || { color: COLORS.brand, icon: "location" };
               return (
-                <Marker key={d.id} coordinate={[d.longitude, d.latitude]} anchor="bottom" onPress={() => setSel(d)}>
+                <Marker key={d.id} lngLat={[d.longitude, d.latitude]} anchor="bottom" onPress={() => setSel(d)}>
                   <MapPin color={cfg.color} icon={d.marker_icon || cfg.icon} active={sel?.id === d.id} />
                 </Marker>
               );

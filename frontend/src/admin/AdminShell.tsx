@@ -73,7 +73,6 @@ function Dashboard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Narrow / mobile: top bar + horizontally scrollable nav.
   return (
     <View style={styles.narrowRoot}>
       <View style={[styles.topbar, { paddingTop: insets.top + SPACING.sm }]}>
@@ -99,10 +98,19 @@ function AdminLogin() {
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
     setErr("");
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      setErr("أدخل بريدًا إلكترونيًا صحيحًا");
+      return;
+    }
+    if (password.length < 6) {
+      setErr("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      return;
+    }
     setBusy(true);
     try {
-      await login(email.trim(), password);
+      await login(normalizedEmail, password);
     } catch (e: any) {
       setErr(e.message || "فشل تسجيل الدخول");
     } finally {
@@ -118,10 +126,10 @@ function AdminLogin() {
         <Text style={styles.authSub}>هذه المنطقة مخصصة للمشرفين فقط</Text>
         {err ? <View style={styles.errBox}><Text style={styles.errTxt}>{err}</Text></View> : null}
         <Text style={styles.authLabel}>البريد الإلكتروني</Text>
-        <TextInput style={styles.authInput} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address"
-          placeholder="admin@socotra.app" placeholderTextColor={COLORS.onSurfaceSecondary} textAlign="right" testID="admin-login-email" />
+        <TextInput style={styles.authInput} value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address"
+          placeholder="البريد الإلكتروني" placeholderTextColor={COLORS.onSurfaceSecondary} textAlign="right" testID="admin-login-email" />
         <Text style={styles.authLabel}>كلمة المرور</Text>
-        <TextInput style={styles.authInput} value={password} onChangeText={setPassword} secureTextEntry
+        <TextInput style={styles.authInput} value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoCorrect={false}
           placeholder="••••••••" placeholderTextColor={COLORS.onSurfaceSecondary} textAlign="right" testID="admin-login-password"
           onSubmitEditing={submit} />
         <Button title="تسجيل الدخول" icon="log-in" loading={busy} onPress={submit} style={{ marginTop: SPACING.lg }} testID="admin-login-submit" />
@@ -162,13 +170,11 @@ const styles = StyleSheet.create({
   avatarTxt: { fontFamily: FONT.bold, color: "#fff", fontSize: FSIZE.lg },
   userName: { fontFamily: FONT.bold, fontSize: FSIZE.base, color: COLORS.onSurface, textAlign: "right" },
   userMail: { fontFamily: FONT.body, fontSize: FSIZE.sm, color: COLORS.onSurfaceSecondary, textAlign: "right" },
-
   narrowRoot: { flex: 1, backgroundColor: COLORS.surfaceSecondary },
   topbar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md, backgroundColor: COLORS.surface },
   topLogout: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.surfaceSecondary, alignItems: "center", justifyContent: "center" },
   navScroll: { flexGrow: 0, backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   navScrollInner: { flexDirection: "row", gap: SPACING.sm, paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md },
-
   authRoot: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: COLORS.surfaceSecondary, padding: SPACING.lg },
   authCard: { width: 400, maxWidth: "100%", backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.xl, alignItems: "stretch" },
   authLogo: { width: 56, height: 56, borderRadius: RADIUS.md, backgroundColor: COLORS.brand, alignItems: "center", justifyContent: "center", alignSelf: "center", marginBottom: SPACING.md },

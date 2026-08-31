@@ -198,8 +198,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>("ar");
 
   useEffect(() => {
-    storage.getItem(KEY, "ar").then((v) => {
-      if (v === "en" || v === "ar") setLangState(v);
+    storage.getItem<string>(KEY, "ar").then((v) => {
+      if (v === "en" || v === "ar") setLangState(v as Lang);
     });
   }, []);
 

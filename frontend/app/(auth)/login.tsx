@@ -15,6 +15,8 @@ import { useToast } from "@/src/components/Toast";
 
 const BG = "https://images.unsplash.com/photo-1642425146676-992ad3f73e26?q=85&w=1200";
 const { height } = Dimensions.get("window");
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 128;
 
 export default function Login() {
   const insets = useSafeAreaInsets();
@@ -32,14 +34,19 @@ export default function Login() {
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!/^\S+@\S+\.\S+$/.test(email)) e.email = "بريد إلكتروني غير صالح";
-    if (password.length < 6) e.password = "كلمة المرور 6 أحرف على الأقل";
+    const normalizedEmail = email.trim();
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail) || normalizedEmail.length > MAX_EMAIL_LENGTH) {
+      e.email = "بريد إلكتروني غير صالح";
+    }
+    if (password.length < 6 || password.length > MAX_PASSWORD_LENGTH) {
+      e.password = `كلمة المرور يجب أن تكون بين 6 و${MAX_PASSWORD_LENGTH} حرفاً`;
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const onLogin = async () => {
-    if (!validate()) return;
+    if (!validate() || loading) return;
     setLoading(true);
     try {
       await login(email.trim(), password);
@@ -51,6 +58,7 @@ export default function Login() {
   };
 
   const onGoogle = async () => {
+    if (gLoading || loading) return;
     setGLoading(true);
     try {
       await loginWithGoogle();
@@ -93,6 +101,7 @@ export default function Login() {
             placeholder="example@email.com"
             autoCapitalize="none"
             keyboardType="email-address"
+            maxLength={MAX_EMAIL_LENGTH}
             value={email}
             onChangeText={setEmail}
             error={errors.email}
@@ -103,6 +112,7 @@ export default function Login() {
             icon="lock-closed-outline"
             placeholder="••••••••"
             secure
+            maxLength={MAX_PASSWORD_LENGTH}
             value={password}
             onChangeText={setPassword}
             error={errors.password}
@@ -116,7 +126,7 @@ export default function Login() {
             <View style={styles.line} />
           </View>
 
-          <Pressable testID="login-google" style={styles.google} onPress={onGoogle} disabled={gLoading}>
+          <Pressable testID="login-google" style={styles.google} onPress={onGoogle} disabled={gLoading || loading}>
             <Ionicons name="logo-google" size={20} color="#DB4437" />
             <Text style={styles.googleTxt}>{gLoading ? "..." : t("continue_google")}</Text>
           </Pressable>

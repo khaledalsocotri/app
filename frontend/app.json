@@ -13,9 +13,6 @@
       "bundleIdentifier": "com.emergent.islanddiscovery.suuec5",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Show your position on the Socotra map"
-      },
-      "config": {
-        "googleMapsApiKey": ""
       }
     },
     "android": {
@@ -28,12 +25,7 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
-      ],
-      "config": {
-        "googleMaps": {
-          "apiKey": ""
-        }
-      }
+      ]
     },
     "web": {
       "bundler": "metro",

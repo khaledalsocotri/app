@@ -43,7 +43,7 @@ export function MapCanvas({
         .map((d) => {
           const cfg = colorMap[d.category] || { color: COLORS.brand, icon: "location" };
           return (
-            <Marker key={d.id} coordinate={[d.longitude, d.latitude]} anchor="bottom" onPress={() => onSelect(d)}>
+            <Marker key={d.id} lngLat={[d.longitude, d.latitude]} anchor="bottom" onPress={() => onSelect(d)}>
               <MapPin color={cfg.color} icon={d.marker_icon || cfg.icon} active={selected?.id === d.id} />
             </Marker>
           );

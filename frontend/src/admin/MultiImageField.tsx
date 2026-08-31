@@ -7,8 +7,10 @@ import { COLORS, SPACING, RADIUS, FONT, FSIZE } from "@/src/theme/theme";
 import { uploadImageAsync } from "@/src/api/upload";
 import { useToast } from "@/src/components/Toast";
 
-// Manages a gallery of image URLs. First image is the cover. Supports upload
-// from device, add by URL, delete, and set-as-cover.
+const MAX_IMAGES = 12;
+const MAX_URL_LENGTH = 2048;
+const IMAGE_URL_RE = /^https?:\/\/[^\s]+$/i;
+
 export function MultiImageField({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
   const toast = useToast();
   const [url, setUrl] = useState("");
@@ -16,29 +18,52 @@ export function MultiImageField({ value, onChange }: { value: string[]; onChange
   const images = Array.isArray(value) ? value : [];
 
   const add = (u: string) => {
-    if (!u) return;
-    onChange([...images, u]);
+    const normalized = u.trim();
+    if (!normalized) return;
+    if (normalized.length > MAX_URL_LENGTH || !IMAGE_URL_RE.test(normalized)) {
+      toast.show("رابط الصورة غير صالح", "error");
+      return;
+    }
+    if (images.includes(normalized)) {
+      toast.show("هذه الصورة مضافة مسبقاً", "info");
+      return;
+    }
+    if (images.length >= MAX_IMAGES) {
+      toast.show(`الحد الأقصى ${MAX_IMAGES} صورة`, "info");
+      return;
+    }
+    onChange([...images, normalized]);
   };
+
   const remove = (i: number) => onChange(images.filter((_, idx) => idx !== i));
   const makeCover = (i: number) => {
     const next = [...images];
     const [it] = next.splice(i, 1);
-    onChange([it, ...next]);
+    if (it) onChange([it, ...next]);
   };
 
   const pick = async () => {
+    if (images.length >= MAX_IMAGES) {
+      toast.show(`الحد الأقصى ${MAX_IMAGES} صورة`, "info");
+      return;
+    }
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (perm.status !== "granted") {
       toast.show("نحتاج إذن الوصول للصور", "info");
       return;
     }
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.6, allowsMultipleSelection: true });
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"], quality: 0.6, allowsMultipleSelection: true,
+      selectionLimit: MAX_IMAGES - images.length,
+    });
     if (res.canceled || !res.assets?.length) return;
     setUploading(true);
     try {
       const uploaded: string[] = [];
-      for (const a of res.assets) uploaded.push(await uploadImageAsync(a.uri));
-      onChange([...images, ...uploaded]);
+      for (const a of res.assets.slice(0, MAX_IMAGES - images.length)) {
+        if (!uploaded.includes(a.uri)) uploaded.push(await uploadImageAsync(a.uri));
+      }
+      onChange([...images, ...uploaded.filter((u, i, arr) => arr.indexOf(u) === i)]);
     } catch (e: any) {
       toast.show(e.message || "فشل رفع الصورة", "error");
     } finally {
@@ -52,36 +77,18 @@ export function MultiImageField({ value, onChange }: { value: string[]; onChange
         {images.map((img, i) => (
           <View key={img + i} style={styles.thumbWrap} testID={`image-${i}`}>
             <Image source={img} style={styles.thumb} contentFit="cover" />
-            {i === 0 ? (
-              <View style={styles.coverBadge}><Text style={styles.coverTxt}>الغلاف</Text></View>
-            ) : (
-              <Pressable style={styles.coverBtn} onPress={() => makeCover(i)} testID={`make-cover-${i}`}>
-                <Ionicons name="star-outline" size={13} color="#fff" />
-              </Pressable>
-            )}
-            <Pressable style={styles.del} onPress={() => remove(i)} testID={`del-image-${i}`}>
-              <Ionicons name="close" size={14} color="#fff" />
-            </Pressable>
+            {i === 0 ? <View style={styles.coverBadge}><Text style={styles.coverTxt}>الغلاف</Text></View> : <Pressable style={styles.coverBtn} onPress={() => makeCover(i)} testID={`make-cover-${i}`}><Ionicons name="star-outline" size={13} color="#fff" /></Pressable>}
+            <Pressable style={styles.del} onPress={() => remove(i)} testID={`del-image-${i}`}><Ionicons name="close" size={14} color="#fff" /></Pressable>
           </View>
         ))}
-        <Pressable style={styles.addTile} onPress={pick} disabled={uploading} testID="add-image-upload">
+        <Pressable style={styles.addTile} onPress={pick} disabled={uploading || images.length >= MAX_IMAGES} testID="add-image-upload">
           {uploading ? <ActivityIndicator color={COLORS.brand} /> : <Ionicons name="cloud-upload-outline" size={22} color={COLORS.brand} />}
-          <Text style={styles.addTxt}>{uploading ? "جارٍ الرفع" : "رفع صور"}</Text>
+          <Text style={styles.addTxt}>{uploading ? "جارٍ الرفع" : images.length >= MAX_IMAGES ? "اكتمل الحد" : "رفع صور"}</Text>
         </Pressable>
       </View>
       <View style={styles.urlRow}>
-        <TextInput
-          style={styles.urlInput}
-          placeholder="أو أضف رابط صورة"
-          placeholderTextColor={COLORS.onSurfaceSecondary}
-          value={url}
-          onChangeText={setUrl}
-          textAlign="right"
-          testID="image-url-input"
-        />
-        <Pressable style={styles.urlBtn} onPress={() => { add(url.trim()); setUrl(""); }} testID="add-image-url">
-          <Ionicons name="add" size={20} color="#fff" />
-        </Pressable>
+        <TextInput style={styles.urlInput} placeholder="أو أضف رابط صورة" placeholderTextColor={COLORS.onSurfaceSecondary} value={url} onChangeText={setUrl} textAlign="right" maxLength={MAX_URL_LENGTH} autoCapitalize="none" autoCorrect={false} testID="image-url-input" />
+        <Pressable style={styles.urlBtn} onPress={() => { add(url); setUrl(""); }} disabled={images.length >= MAX_IMAGES} testID="add-image-url"><Ionicons name="add" size={20} color="#fff" /></Pressable>
       </View>
     </View>
   );

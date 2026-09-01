@@ -21,7 +21,7 @@ export const setToken = async (token: string | null) => {
 
 export const loadToken = async (): Promise<string | null> => {
   if (memToken) return memToken;
-  const t = await storage.secureGet(TOKEN_KEY, "");
+  const t: string | null = await storage.secureGet<string>(TOKEN_KEY, "");
   memToken = t && t.length > 0 ? t : null;
   return memToken;
 };
